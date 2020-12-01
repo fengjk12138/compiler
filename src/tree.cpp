@@ -1,18 +1,29 @@
 #include "tree.h"
-void TreeNode::addChild(TreeNode* child) {
 
+void TreeNode::addChild(TreeNode *child) {
+    if (this->child == nullptr) {
+        this->child = child;
+    } else {
+        TreeNode *tmp = this->child;
+        while (tmp->sibling != nullptr) {
+            tmp = tmp->sibling;
+        }
+        tmp->sibling = child;
+    }
 }
 
-void TreeNode::addSibling(TreeNode* sibling){
+void TreeNode::addSibling(TreeNode *sibling) {
 
 }
 
 TreeNode::TreeNode(int lineno, NodeType type) {
-
+    this->lineno = lineno;
+    this->nodeType = type;
+    genNodeId();
 }
 
 void TreeNode::genNodeId() {
-
+    this->nodeID = ++nowID;
 }
 
 void TreeNode::printNodeInfo() {
@@ -30,7 +41,7 @@ void TreeNode::printAST() {
 
 // You can output more info...
 void TreeNode::printSpecialInfo() {
-    switch(this->nodeType){
+    switch (this->nodeType) {
         case NODE_CONST:
             break;
         case NODE_VAR:
@@ -51,6 +62,6 @@ string TreeNode::sType2String(StmtType type) {
 }
 
 
-string TreeNode::nodeType2String (NodeType type){
+string TreeNode::nodeType2String(NodeType type) {
     return "<>";
 }

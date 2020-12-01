@@ -4,41 +4,62 @@
 #include "pch.h"
 #include "type.h"
 
-enum NodeType
-{
-    NODE_CONST, 
+enum NodeType {
+    NODE_CONST,
     NODE_VAR,
     NODE_EXPR,
     NODE_TYPE,
+
 
     NODE_STMT,
     NODE_PROG,
 };
 
-enum OperatorType
-{
-    OP_EQ,  // ==
+
+enum ExpType {
+    NOTEQL,// !=
+    EQL, //==
+    BIGEQL,//>=
+    SMALLEQL, //<=
+    BIG,//>
+    SMALL,//<
+
+    AND,// &&
+    OR,// ||
+    NOT,// !
+    ADD,// +
+    SUB,// -
+    MUL,// *
+    DIV,// /
+    MOD,// %
+
+    BR,// ()
+
+    POS,// +4
+    NEG,// -5
 };
 
 enum StmtType {
     STMT_SKIP,
     STMT_DECL,
-}
-;
+};
 
 struct TreeNode {
 public:
+    static int nowID = 0;
     int nodeID;  // 用于作业的序号输出
     int lineno;
     NodeType nodeType;
 
-    TreeNode* child = nullptr;
-    TreeNode* sibling = nullptr;
+    TreeNode *child = nullptr;
+    TreeNode *sibling = nullptr;
 
-    void addChild(TreeNode*);
-    void addSibling(TreeNode*);
-    
+    void addChild(TreeNode *);
+
+    void addSibling(TreeNode *);
+
     void printNodeInfo();
+
     void printChildrenId();
 
     void printAST(); // 先输出自己 + 孩子们的id；再依次让每个孩子输出AST。
@@ -47,8 +68,8 @@ public:
     void genNodeId();
 
 public:
-    OperatorType optype;  // 如果是表达式
-    Type* type;  // 变量、类型、表达式结点，有类型。
+    ExpType exptype;
+    Type *type;  // 变量、类型、表达式结点，有类型。
     StmtType stype;
     int int_val;
     char ch_val;
@@ -56,9 +77,11 @@ public:
     string str_val;
     string var_name;
 public:
-    static string nodeType2String (NodeType type);
-    static string opType2String (OperatorType type);
-    static string sType2String (StmtType type);
+    static string nodeType2String(NodeType type);
+
+    static string opType2String(OperatorType type);
+
+    static string sType2String(StmtType type);
 
 public:
     TreeNode(int lineno, NodeType type);
