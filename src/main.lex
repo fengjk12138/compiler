@@ -4,8 +4,8 @@
 #include "main.tab.h"  // yacc header
 int lineno=1;
 int beginDef=0;
-VarNode *root = new VarNode;
-VarNode *now = root;
+VarNode *root_var = new VarNode;
+VarNode *now = root_var;
 %}
 BLOCKCOMMENT \/\*([^\*^\/]*|[\*^\/*]*|[^\**\/]*)*\*\/
 LINECOMMENT \/\/[^\n]*
@@ -16,7 +16,10 @@ INTEGER [0-9]+
 
 CHAR \'.?\'
 STRING \".+\"
-BOOL_CONST "true" | "false"
+BOOL_CONST "true"|"false"
+
+left_br_mid "["
+right_br_mid "]"
 
 IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 %%
@@ -28,8 +31,8 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 "+" return add;
 "-" return sub;
 "*" return mul;
-"/" return div;
-"%" return mod;
+"/" return div_char;
+"%" return mod_char;
 
 "==" return eql;
 "!=" return noteql;
@@ -51,27 +54,21 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 ";" {beginDef=0;return  SEMICOLON;}
 
 "(" return left_br_small;
-")" return left_br_small;
-"[" return left_br_mid;
-"]" return right_br_mid;
-"{" {
-    VarNode *tmp=new VarNode;
-    now->addChild(tmp);
-    now = tmp;
-    return left_br_big;
-}
-"}" {
-    now = now->fa;
-    return right_br_big;
-}
+")" return right_br_small;
+
+"{" {VarNode *tmp=new VarNode;now->addChild(tmp);now = tmp;return left_br_big;}
+
+"}" {now = now->fa;return right_br_big;}
+
 "return" return Return;
 "if" return If;
 "while" return While;
 "for" return For;
 "main" return Main;
-
-
-
+"scanf" return Scanf;
+"printf" return Printf;
+"&" return Get_Addr;
+"," return Interval;
 
 {INTEGER} {
     TreeNode* node = new TreeNode(lineno, NODE_CONST);
@@ -94,13 +91,13 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
     node->type = TYPE_BOOL;
     node->b_val = string(yytext)==string("true");
     yylval = node;
-    return CHAR;
+    return BOOL_CONST;
 }
 
 {IDENTIFIER} {
     TreeNode* node = new TreeNode(lineno, NODE_VAR);
     node->var_name = string(yytext);
-    yylval = node;
+
 
     if(beginDef){
         now -> var[node->var_name]=make_pair(++VarNode::nodeID, beginDef == 1 ? TYPE_INT : TYPE_CHAR);
@@ -109,7 +106,7 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
         VarNode *tmp = now;
         int thisNodeid=-1;
         while(now != nullptr){
-            if(now->var.find(node->var_name) != now->var.end()){
+            if(now->var.find(node->var_name) == now->var.end()){
                 now=now->fa;
             }else{
                 thisNodeid=now -> var[node->var_name].first;
@@ -118,12 +115,12 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
         }
         node->var_id = thisNodeid;
     }
-
+    yylval = node;
     return IDENTIFIER;
 }
 
 
-{STRING}{
+{STRING} {
     TreeNode* node = new TreeNode(lineno, NODE_CONST);
     node->type = TYPE_STRING;
     node->str_val = string(yytext);

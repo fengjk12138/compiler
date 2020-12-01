@@ -10,11 +10,17 @@ enum NodeType {
     NODE_EXPR,
     NODE_TYPE,
 
-
+    NODE_FORMT,
     NODE_STMT,
     NODE_PROG,
 };
 
+enum ForMat{
+    SCANF_FORMAT,
+    DEFINE_FORMAT_INIT,
+    DEFINE_FORMAT,
+    PRINT_FORMAT,
+};
 
 enum ExpType {
     NOTEQL,// !=
@@ -24,9 +30,10 @@ enum ExpType {
     BIG,//>
     SMALL,//<
 
-    AND,// &&
-    OR,// ||
-    NOT,// !
+    AND_BOOL,// &&
+    OR_BOOL,// ||
+    NOT_BOOL,// !
+
     ADD,// +
     SUB,// -
     MUL,// *
@@ -43,11 +50,15 @@ enum StmtType {
     STMT_SKIP,
     STMT_DECL,
     STMT_ASSIGN,
+    STMT_BLOCK,
+    STMT_RET,
+    STMT_SCANF,
+    STMT_PRINT,
 };
 
 struct TreeNode {
 public:
-    static int nowID = 0;
+    static int nowID;
     int nodeID;  // 用于作业的序号输出
     int lineno;
     NodeType nodeType;
@@ -72,25 +83,26 @@ public:
     ExpType exptype;
     Type *type;  // 变量、类型、表达式结点，有类型。
     StmtType stype;
+    ForMat ftype;
     int var_id;
     int int_val;
     char ch_val;
     bool b_val;
     string str_val;
     string var_name;
-public:
-    static string nodeType2String(NodeType type);
-
-    static string opType2String(OperatorType type);
-
-    static string sType2String(StmtType type);
+//public:
+//    static string nodeType2String(NodeType type);
+//
+//    static string opType2String(OperatorType type);
+//
+//    static string sType2String(StmtType type);
 
 public:
     TreeNode(int lineno, NodeType type);
 };
 
 struct VarNode {
-    static int nodeID = 0;
+    static int nodeID;
     int lineno;
     VarNode *fa = nullptr;
     std::map <std::string, std::pair<int, Type *>> var;

@@ -14,6 +14,8 @@
 
 %token IDENTIFIER INTEGER CHAR BOOL STRING
 
+%token BOOL_CONST
+
 %token left_br_small right_br_small left_br_mid rigth_br_mid left_br_big right_br_big
 
 %token Return If While For Main
@@ -25,7 +27,7 @@
 %left eql noteql
 %left bigeql smalleql big small
 %left add sub
-%left mod mul div
+%left mod_char mul div_char
 
 
 
@@ -37,12 +39,32 @@ program
 statements
 :  statement {$$=$1;}
 |  statements statement {$$=$1; $$->addSibling($2);}
+| left_br_big statements right_br_big {
+	TreeNode* node = new TreeNode($1->lineno, NODE_STMT);
+    	node->stype = STMT_BLOCK;
+    	node->addChild($2);
+    	$$ = node;
+}
 ;
 
 statement
 : SEMICOLON  {$$ = new TreeNode(lineno, NODE_STMT); $$->stype = STMT_SKIP;}
 | declaration SEMICOLON {$$ = $1;}
 | ASSIGN SEMICOLON {$$ = $1;}
+| Return expr SEMICOLON {
+	TreeNode* node = new TreeNode($2->lineno, NODE_STMT);
+	node->stype = STMT_RET;
+	node->addChild($2);
+	$$ = node;
+}
+| Scanf left_br_small STRING Scanf_format right_br_small SEMICOLON{
+	TreeNode* node = new TreeNode($2->lineno, NODE_STMT);
+	node->stype = STMT_SCANF;
+	node->addChild($2);
+	node->addChild($3);
+	$$ = node;
+}
+|
 ;
 
 declaration
@@ -62,6 +84,27 @@ declaration
     $$ = node;   
 }
 ;
+
+define_list_inter: IDENTIFIER LOP_ASSIGN expr Interval
+| IDENTIFIER Interval define_list;
+define_list:  define_list_inter IDENTIFIER LOP_ASSIGN expr{
+	TreeNode* node = new TreeNode($1->lineno, NODE_FORMT);
+    	node->stype = DEFINE_FORMAT_INIT;
+    	node->addChild($1);
+   	node->addChild($2);
+    	node->addChild($4);
+    	$$ = node;
+}
+| define_list_inter IDENTIFIER{
+
+}
+| IDENTIFIER LOP_ASSIGN expr{
+
+}
+| IDENTIFIER{
+
+};
+
 
 expr
 : IDENTIFIER {
@@ -97,14 +140,14 @@ expr
     	node->addChild($3);
     	$$ = node;
 }
-| expr div expr{
+| expr div_char expr{
 	TreeNode* node = new TreeNode($1->lineno, NODE_EXPR);
     	node->exptype = DIV;
     	node->addChild($1);
     	node->addChild($3);
     	$$ = node;
 }
-| expr mod expr{
+| expr mod_char expr{
 	TreeNode* node = new TreeNode($1->lineno, NODE_EXPR);
     	node->exptype = MOD;
     	node->addChild($1);
@@ -154,19 +197,19 @@ expr
     	$$ = node;
 }
 | sub expr{
-	TreeNode* node = new TreeNode($1->lineno, NODE_EXPR);
+	TreeNode* node = new TreeNode($2->lineno, NODE_EXPR);
     	node->exptype = NEG;
     	node->addChild($2);
     	$$ = node;
 }
 | add expr{
-	TreeNode* node = new TreeNode($1->lineno, NODE_EXPR);
+	TreeNode* node = new TreeNode($2->lineno, NODE_EXPR);
 	node->exptype = POS;
 	node->addChild($2);
 	$$ = node;
 }
 | left_br_small expr right_br_small{
-	TreeNode* node = new TreeNode($1->lineno, NODE_EXPR);
+	TreeNode* node = new TreeNode($2->lineno, NODE_EXPR);
     	node->exptype = BR;
     	node->addChild($2);
     	$$ = node;
@@ -184,8 +227,20 @@ ASSIGN: IDENTIFIER LOP_ASSIGN expr{
     	node->addChild($1);
     	node->addChild($3);
     	$$ = node;
-}
+};
 
+Scanf_format:Interval Get_Addr IDENTIFIER{
+	TreeNode* node = new TreeNode($3->lineno, NODE_FORMT);
+   	node->ftype = SCANF_FORMAT;
+    	node->addChild($3);
+    	$$ = node;
+}
+| Interval IDENTIFIER{
+	TreeNode* node = new TreeNode($2->lineno, NODE_FORMT);
+   	node->ftype = SCANF_FORMAT;
+    	node->addChild($2);
+    	$$ = node;
+}
 %%
 
 int yyerror(char const* message)
