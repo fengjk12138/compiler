@@ -8,6 +8,8 @@ using std::endl;
 using std::string;
 using std::list;
 using std::stack;
+using std::vector;
+using std::make_pair;
 using std::unordered_map;
 #define YYSTYPE TreeNode *
 

@@ -18,11 +18,16 @@
 
 %token Return If While For Main
 
-
+%left LOP_EQ
+%left NOT
+%left OR
+%left AND
+%left eql noteql
+%left bigeql smalleql big small
 %left add sub
 %left mod mul div
 
-%left LOP_EQ
+
 
 %%
 
@@ -37,6 +42,7 @@ statements
 statement
 : SEMICOLON  {$$ = new TreeNode(lineno, NODE_STMT); $$->stype = STMT_SKIP;}
 | declaration SEMICOLON {$$ = $1;}
+| ASSIGN SEMICOLON {$$ = $1;}
 ;
 
 declaration
@@ -171,6 +177,14 @@ T: T_INT {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_INT;}
 | T_CHAR {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_CHAR;}
 | T_BOOL {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_BOOL;}
 ;
+
+ASSIGN: IDENTIFIER LOP_ASSIGN expr{
+	TreeNode* node = new TreeNode($1->lineno, NODE_STMT);
+   	node->stype = STMT_ASSIGN;
+    	node->addChild($1);
+    	node->addChild($3);
+    	$$ = node;
+}
 
 %%
 

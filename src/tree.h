@@ -42,6 +42,7 @@ enum ExpType {
 enum StmtType {
     STMT_SKIP,
     STMT_DECL,
+    STMT_ASSIGN,
 };
 
 struct TreeNode {
@@ -71,6 +72,7 @@ public:
     ExpType exptype;
     Type *type;  // 变量、类型、表达式结点，有类型。
     StmtType stype;
+    int var_id;
     int int_val;
     char ch_val;
     bool b_val;
@@ -85,6 +87,17 @@ public:
 
 public:
     TreeNode(int lineno, NodeType type);
+};
+
+struct VarNode {
+    static int nodeID = 0;
+    int lineno;
+    VarNode *fa = nullptr;
+    std::map <std::string, std::pair<int, Type *>> var;
+    VarNode *child = nullptr;
+    VarNode *sibling = nullptr;
+
+    void addChild(VarNode *);
 };
 
 #endif

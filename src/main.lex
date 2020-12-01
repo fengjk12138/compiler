@@ -3,6 +3,9 @@
 #include "common.h"
 #include "main.tab.h"  // yacc header
 int lineno=1;
+int beginDef=0;
+VarNode *root = new VarNode;
+VarNode *now = root;
 %}
 BLOCKCOMMENT \/\*([^\*^\/]*|[\*^\/*]*|[^\**\/]*)*\*\/
 LINECOMMENT \/\/[^\n]*
@@ -13,7 +16,7 @@ INTEGER [0-9]+
 
 CHAR \'.?\'
 STRING \".+\"
-
+BOOL_CONST "true" | "false"
 
 IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 %%
@@ -22,42 +25,50 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 {LINECOMMENT}  /* do nothing */
 
 
-"+" return  add
-"-" return sub
-"*" return mul
-"/" return div
-"%" return mod
+"+" return add;
+"-" return sub;
+"*" return mul;
+"/" return div;
+"%" return mod;
 
-"==" return eql
-"!=" return noteql
-">=" return bigeql
-"<=" return smalleql
-">" return big
-"<" return small
+"==" return eql;
+"!=" return noteql;
+">=" return bigeql;
+"<=" return smalleql;
+">" return big;
+"<" return small;
 
-"||" return OR
-"&&" return AND
-"!" return NOT
+"||" return OR;
+"&&" return AND;
+"!" return NOT;
 
 
-"int" return T_INT;
-"char" return T_CHAR;
+"int" {beginDef=1; return T_INT;}
+"char" {beginDef=2;return T_CHAR;}
 
 "=" return LOP_ASSIGN;
 
-";" return  SEMICOLON;
+";" {beginDef=0;return  SEMICOLON;}
 
-"(" return left_br_small
-")" return left_br_small
-"[" return left_br_mid
-"]" return right_br_mid
-"{" return left_br_big
-"}" return right_br_big
-"return" return Return
-"if" return If
-"while" return While
-"for" return For
-"main" return Main
+"(" return left_br_small;
+")" return left_br_small;
+"[" return left_br_mid;
+"]" return right_br_mid;
+"{" {
+    VarNode *tmp=new VarNode;
+    now->addChild(tmp);
+    now = tmp;
+    return left_br_big;
+}
+"}" {
+    now = now->fa;
+    return right_br_big;
+}
+"return" return Return;
+"if" return If;
+"while" return While;
+"for" return For;
+"main" return Main;
 
 
 
@@ -78,15 +89,43 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
     return CHAR;
 }
 
+{BOOL_CONST} {
+    TreeNode* node = new TreeNode(lineno, NODE_CONST);
+    node->type = TYPE_BOOL;
+    node->b_val = string(yytext)==string("true");
+    yylval = node;
+    return CHAR;
+}
+
 {IDENTIFIER} {
     TreeNode* node = new TreeNode(lineno, NODE_VAR);
     node->var_name = string(yytext);
     yylval = node;
+
+    if(beginDef){
+        now -> var[node->var_name]=make_pair(++VarNode::nodeID, beginDef == 1 ? TYPE_INT : TYPE_CHAR);
+        node->var_id = VarNode::nodeID;
+    }else{
+        VarNode *tmp = now;
+        int thisNodeid=-1;
+        while(now != nullptr){
+            if(now->var.find(node->var_name) != now->var.end()){
+                now=now->fa;
+            }else{
+                thisNodeid=now -> var[node->var_name].first;
+                break;
+            }
+        }
+        node->var_id = thisNodeid;
+    }
+
     return IDENTIFIER;
 }
 
+
 {STRING}{
     TreeNode* node = new TreeNode(lineno, NODE_CONST);
+    node->type = TYPE_STRING;
     node->str_val = string(yytext);
     yylval = node;
     return STRING;

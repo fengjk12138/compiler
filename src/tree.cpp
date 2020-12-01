@@ -13,17 +13,34 @@ void TreeNode::addChild(TreeNode *child) {
 }
 
 void TreeNode::addSibling(TreeNode *sibling) {
-
+    this->sibling = sibling;
 }
 
 TreeNode::TreeNode(int lineno, NodeType type) {
     this->lineno = lineno;
     this->nodeType = type;
-    genNodeId();
+}
+
+void VarNode::addChild(VarNode *child) {
+    if (this->child == nullptr) {
+        this->child = child;
+    } else {
+        VarNode *tmp = this->child;
+        while (tmp->sibling != nullptr) {
+            tmp = tmp->sibling;
+        }
+        tmp->sibling = child;
+    }
+    child->fa = this;
 }
 
 void TreeNode::genNodeId() {
-    this->nodeID = ++nowID;
+    TreeNode *tmp = this;
+    while (tmp != nullptr) {
+        tmp->nodeID = nowID++;
+        tmp->child->genNodeId();
+        tmp = tmp->sibling;
+    }
 }
 
 void TreeNode::printNodeInfo() {

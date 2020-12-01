@@ -10,11 +10,12 @@
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
+#include <vector>
 #include <string>
 #include <list>
 #include <assert.h>
-
 #include <map>
+#include <utility>
 #include <stack>
 #include <unordered_map>
 
