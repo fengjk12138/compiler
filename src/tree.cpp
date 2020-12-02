@@ -92,7 +92,7 @@ void TreeNode::printSpecialInfo() {
             else if (this->type->type == VALUE_BOOL)
                 printf("\t\tconst: bool->%s", this->b_val ? "true" : "false");
             else if (this->type->type == VALUE_STRING)
-                printf("\t\tconst: string->\"%s\"", this->str_val.c_str());
+                printf("\t\tconst: string->%s", this->str_val.c_str());
             break;
         case NODE_VAR:
             printf("\t\tvar: %s", this->var_name.c_str());
@@ -116,7 +116,7 @@ void TreeNode::printSpecialInfo() {
             else if (this->stype == STMT_ASSIGN_DIV)
                 printf("\t\tstatement: var_assign-> /=");
             else if (this->stype == STMT_ASSIGN_MOD)
-                printf("\t\tstatement: var_assign-> %=");
+                printf("\t\tstatement: var_assign-> %%=");
             else if (this->stype == STMT_BLOCK)
                 printf("\t\tstatement: var_assign-> {...}");
             else if (this->stype == STMT_RET)

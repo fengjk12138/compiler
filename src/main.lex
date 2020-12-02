@@ -28,7 +28,8 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 {LINECOMMENT}  /* do nothing */
 
 
-"+" return add;
+"+" {printf("+");return add;}
+"++" {printf("-");return add_self;}
 "-" return sub;
 "*" return mul;
 "/" return div_char;
@@ -119,11 +120,11 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
     }else{
         VarNode *tmp = now;
         int thisNodeid=-1;
-        while(now != nullptr){
-            if(now->var.find(node->var_name) == now->var.end()){
-                now=now->fa;
+        while(tmp != nullptr){
+            if(tmp->var.find(node->var_name) == tmp->var.end()){
+                tmp=tmp->fa;
             }else{
-                thisNodeid=now -> var[node->var_name].first;
+                thisNodeid=tmp -> var[node->var_name].first;
                 break;
             }
         }

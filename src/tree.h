@@ -40,6 +40,7 @@ enum ExpType {
     MUL,// *
     DIV,// /
     MOD,// %
+    //ADD_SELF, //++
 
     BR,// ()
 
@@ -56,11 +57,14 @@ enum StmtType {
     STMT_ASSIGN_MUL,
     STMT_ASSIGN_DIV,
     STMT_ASSIGN_MOD,
+    STMT_ASSIGN_ADD_SELF,
     STMT_BLOCK,
     STMT_RET,
     STMT_SCANF,
     STMT_PRINT,
     STMT_MAIN,
+    STMT_WHILE,
+    STMT_IF,
 };
 
 struct TreeNode {
