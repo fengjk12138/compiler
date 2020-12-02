@@ -71,6 +71,7 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 
 "return" return Return;
 "if" return If;
+"else" return Else;
 "while" return While;
 "for" return For;
 "main()" {

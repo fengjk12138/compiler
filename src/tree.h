@@ -65,6 +65,7 @@ enum StmtType {
     STMT_MAIN,
     STMT_WHILE,
     STMT_IF,
+    STMT_FOR,
 };
 
 struct TreeNode {

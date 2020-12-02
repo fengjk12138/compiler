@@ -15,7 +15,7 @@
 %token IDENTIFIER INTEGER CHAR BOOL STRING
 
 %token BOOL_CONST
-
+%token Else
 %token Void Scanf Printf Get_Addr Interval
 
 %token left_br_small right_br_small left_br_mid rigth_br_mid left_br_big right_br_big
@@ -31,6 +31,7 @@
 %left bigeql smalleql big small
 %left add sub
 %left mod_char mul div_char
+%left UMINUS
 %left add_self
 
 %%
@@ -60,6 +61,8 @@ program_block : left_br_big statements right_br_big{
     	$$ = node;
 }
 ;
+
+program_sentense: program_block {$$=$1;} | statement {$$=$1;}
 
 statement
 : SEMICOLON  {$$ = new TreeNode(lineno, NODE_STMT); $$->stype = STMT_SKIP;}
@@ -106,7 +109,7 @@ statement
 }
 | For left_br_small declaration  SEMICOLON  expr SEMICOLON ASSIGN right_br_small statement{
 	TreeNode* node = new TreeNode($3->lineno, NODE_STMT);
-	node->stype = STMT_IF;
+	node->stype = STMT_FOR;
 	node->addChild($3);
 	node->addChild($5);
 	node->addChild($7);
@@ -115,7 +118,7 @@ statement
 }
 | For left_br_small declaration  SEMICOLON  expr SEMICOLON ASSIGN right_br_small program_block{
  	TreeNode* node = new TreeNode($3->lineno, NODE_STMT);
- 	node->stype = STMT_IF;
+ 	node->stype = STMT_FOR;
  	node->addChild($3);
  	node->addChild($5);
  	node->addChild($7);
@@ -124,7 +127,7 @@ statement
 }
 | For left_br_small ASSIGN  SEMICOLON  expr SEMICOLON ASSIGN right_br_small statement{
 	TreeNode* node = new TreeNode($3->lineno, NODE_STMT);
-	node->stype = STMT_IF;
+	node->stype = STMT_FOR;
 	node->addChild($3);
 	node->addChild($5);
 	node->addChild($7);
@@ -133,11 +136,26 @@ statement
 }
 | For left_br_small ASSIGN  SEMICOLON  expr SEMICOLON ASSIGN right_br_small program_block{
  	TreeNode* node = new TreeNode($3->lineno, NODE_STMT);
- 	node->stype = STMT_IF;
+ 	node->stype = STMT_FOR;
  	node->addChild($3);
  	node->addChild($5);
  	node->addChild($7);
  	node->addChild($9);
+ 	$$ = node;
+}
+| If left_br_small expr right_br_small program_sentense Else program_sentense %prec UMINUS{
+	TreeNode* node = new TreeNode($3->lineno, NODE_STMT);
+ 	node->stype = STMT_IF;
+ 	node->addChild($3);
+ 	node->addChild($5);
+ 	node->addChild($7);
+ 	$$ = node;
+}
+| If left_br_small expr right_br_small program_sentense{
+	TreeNode* node = new TreeNode($3->lineno, NODE_STMT);
+ 	node->stype = STMT_IF;
+ 	node->addChild($3);
+ 	node->addChild($5);
  	$$ = node;
 }
 ;
@@ -273,13 +291,13 @@ expr
     	node->addChild($3);
     	$$ = node;
 }
-| sub expr{
+| sub expr %prec UMINUS{
 	TreeNode* node = new TreeNode($2->lineno, NODE_EXPR);
     	node->exptype = NEG;
     	node->addChild($2);
     	$$ = node;
 }
-| add expr{
+| add expr %prec UMINUS{
 	TreeNode* node = new TreeNode($2->lineno, NODE_EXPR);
 	node->exptype = POS;
 	node->addChild($2);
