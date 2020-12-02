@@ -33,6 +33,13 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 "*" return mul;
 "/" return div_char;
 "%" return mod_char;
+"+=" return add_assgin;
+"-=" return sub_assgin;
+"*=" return mul_assgin;
+"/=" return div_assgin;
+"%=" return mod_assgin;
+
+"void" return Void;
 
 "==" return eql;
 "!=" return noteql;
@@ -40,6 +47,7 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 "<=" return smalleql;
 ">" return big;
 "<" return small;
+
 
 "||" return OR;
 "&&" return AND;
@@ -64,11 +72,17 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 "if" return If;
 "while" return While;
 "for" return For;
-"main" return Main;
+"main()" {
+    TreeNode* node = new TreeNode(lineno, NODE_STMT);
+    yylval = node;
+    return Main;
+}
 "scanf" return Scanf;
 "printf" return Printf;
 "&" return Get_Addr;
 "," return Interval;
+
+
 
 {INTEGER} {
     TreeNode* node = new TreeNode(lineno, NODE_CONST);

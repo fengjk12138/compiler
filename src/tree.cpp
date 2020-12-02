@@ -107,6 +107,27 @@ void TreeNode::printSpecialInfo() {
                 printf("\t\tstatement: var_define");
             else if (this->stype == STMT_ASSIGN)
                 printf("\t\tstatement: var_assign");
+            else if (this->stype == STMT_ASSIGN_ADD)
+                printf("\t\tstatement: var_assign-> +=");
+            else if (this->stype == STMT_ASSIGN_SUB)
+                printf("\t\tstatement: var_assign-> -=");
+            else if (this->stype == STMT_ASSIGN_MUL)
+                printf("\t\tstatement: var_assign-> *=");
+            else if (this->stype == STMT_ASSIGN_DIV)
+                printf("\t\tstatement: var_assign-> /=");
+            else if (this->stype == STMT_ASSIGN_MOD)
+                printf("\t\tstatement: var_assign-> %=");
+            else if (this->stype == STMT_BLOCK)
+                printf("\t\tstatement: var_assign-> {...}");
+            else if (this->stype == STMT_RET)
+                printf("\t\tstatement: var_assign-> return ;");
+            else if (this->stype == STMT_SCANF)
+                printf("\t\tstatement: var_assign-> scanf");
+            else if (this->stype == STMT_SCANF)
+                printf("\t\tstatement: var_assign-> printf");
+            else if (this->stype == STMT_MAIN)
+                printf("\t\tstatement: var_assign-> main");
+
             break;
         case NODE_TYPE:
             if (this->type->type == VALUE_CHAR)

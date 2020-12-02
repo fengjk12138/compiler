@@ -28,7 +28,7 @@
 %left bigeql smalleql big small
 %left add sub
 %left mod_char mul div_char
-
+%left add_assgin sub_assgin mul_assgin div_assgin mod_assgin
 
 
 %%
@@ -58,52 +58,64 @@ statement
 	$$ = node;
 }
 | Scanf left_br_small STRING Scanf_format right_br_small SEMICOLON{
-	TreeNode* node = new TreeNode($2->lineno, NODE_STMT);
+	TreeNode* node = new TreeNode($3->lineno, NODE_STMT);
 	node->stype = STMT_SCANF;
-	node->addChild($2);
+	node->addChild($3);
+	node->addChild($4);
+	$$ = node;
+}
+| Printf left_br_small STRING Print_format right_br_small SEMICOLON{
+	TreeNode* node = new TreeNode($3->lineno, NODE_STMT);
+	node->stype = STMT_PRINT;
+	node->addChild($3);
+	node->addChild($4);
+	$$ = node;
+}
+| Void Main{
+	TreeNode* node = new TreeNode($2->lineno, NODE_STMT);
+	node->stype = STMT_MAIN;
+	$$ = node;
+}
+;
+
+declaration: T define_list_inter {
+    TreeNode* node = new TreeNode($1->lineno, NODE_STMT);
+    node->stype = STMT_DECL;
+    node->addChild($1);
+    node->addChild($2);
+    $$ = node;   
+}
+;
+
+define_list_inter: IDENTIFIER LOP_ASSIGN expr Interval define_list_inter{
+	TreeNode* node = new TreeNode($1->lineno, NODE_FORMT);
+	node->stype = DEFINE_FORMAT_INIT;
+	node->addChild($1);
+	node->addChild($3);
+	node->addSibling($5);
+	$$ = node;
+}
+| IDENTIFIER Interval define_list_inter{
+	TreeNode* node = new TreeNode($1->lineno, NODE_FORMT);
+	node->stype = DEFINE_FORMAT;
+	node->addChild($1);
+	node->addSibling($3);
+	$$ = node;
+}
+| IDENTIFIER LOP_ASSIGN expr{
+	TreeNode* node = new TreeNode($1->lineno, NODE_FORMT);
+	node->stype = DEFINE_FORMAT_INIT;
+	node->addChild($1);
 	node->addChild($3);
 	$$ = node;
 }
-|
-;
-
-declaration
-: T IDENTIFIER LOP_ASSIGN expr{  // declare and init
-    TreeNode* node = new TreeNode($1->lineno, NODE_STMT);
-    node->stype = STMT_DECL;
-    node->addChild($1);
-    node->addChild($2);
-    node->addChild($4);
-    $$ = node;   
-} 
-| T IDENTIFIER {
-    TreeNode* node = new TreeNode($1->lineno, NODE_STMT);
-    node->stype = STMT_DECL;
-    node->addChild($1);
-    node->addChild($2);
-    $$ = node;   
-}
-;
-
-define_list_inter: IDENTIFIER LOP_ASSIGN expr Interval
-| IDENTIFIER Interval define_list;
-define_list:  define_list_inter IDENTIFIER LOP_ASSIGN expr{
-	TreeNode* node = new TreeNode($1->lineno, NODE_FORMT);
-    	node->stype = DEFINE_FORMAT_INIT;
-    	node->addChild($1);
-   	node->addChild($2);
-    	node->addChild($4);
-    	$$ = node;
-}
-| define_list_inter IDENTIFIER{
-
-}
-| IDENTIFIER LOP_ASSIGN expr{
-
-}
 | IDENTIFIER{
-
-};
+	TreeNode* node = new TreeNode($1->lineno, NODE_FORMT);
+	node->stype = DEFINE_FORMAT_INIT;
+	node->addChild($1);
+	$$ = node;
+}
+;
 
 
 expr
@@ -227,20 +239,75 @@ ASSIGN: IDENTIFIER LOP_ASSIGN expr{
     	node->addChild($1);
     	node->addChild($3);
     	$$ = node;
-};
-
-Scanf_format:Interval Get_Addr IDENTIFIER{
-	TreeNode* node = new TreeNode($3->lineno, NODE_FORMT);
-   	node->ftype = SCANF_FORMAT;
+}
+| IDENTIFIER add_assgin expr{
+	TreeNode* node = new TreeNode($1->lineno, NODE_STMT);
+   	node->stype = STMT_ASSIGN_ADD;
+    	node->addChild($1);
     	node->addChild($3);
     	$$ = node;
 }
-| Interval IDENTIFIER{
+| IDENTIFIER mul_assgin expr{
+	TreeNode* node = new TreeNode($1->lineno, NODE_STMT);
+   	node->stype = STMT_ASSIGN_MUL;
+    	node->addChild($1);
+    	node->addChild($3);
+    	$$ = node;
+}
+| IDENTIFIER sub_assgin expr{
+	TreeNode* node = new TreeNode($1->lineno, NODE_STMT);
+   	node->stype = STMT_ASSIGN_SUB;
+    	node->addChild($1);
+    	node->addChild($3);
+    	$$ = node;
+}
+| IDENTIFIER div_assgin expr{
+	TreeNode* node = new TreeNode($1->lineno, NODE_STMT);
+   	node->stype = STMT_ASSIGN_DIV;
+    	node->addChild($1);
+    	node->addChild($3);
+    	$$ = node;
+}
+| IDENTIFIER mod_assgin expr{
+	TreeNode* node = new TreeNode($1->lineno, NODE_STMT);
+   	node->stype = STMT_ASSIGN_MOD;
+    	node->addChild($1);
+    	node->addChild($3);
+    	$$ = node;
+}
+;
+
+Scanf_format:Interval Get_Addr IDENTIFIER Scanf_format{
+	TreeNode* node = new TreeNode($3->lineno, NODE_FORMT);
+   	node->ftype = SCANF_FORMAT_ADDR;
+   	node->addChild($3);
+   	if($4!=nullptr){
+    		node->addSibling($4);
+    	}
+    	$$ = node;
+}
+| Interval IDENTIFIER Scanf_format{
 	TreeNode* node = new TreeNode($2->lineno, NODE_FORMT);
    	node->ftype = SCANF_FORMAT;
+   	if($3!=nullptr){
+            	node->addSibling($3);
+        }
     	node->addChild($2);
     	$$ = node;
 }
+| {$$=nullptr;}
+
+Print_format : Interval IDENTIFIER Print_format{
+	TreeNode* node = new TreeNode($2->lineno, NODE_FORMT);
+	node->ftype = PRINT_FORMAT;
+	if($3!=nullptr){
+		node->addSibling($3);
+	}
+	node->addChild($2);
+	$$ = node;
+}
+| { $$=nullptr;}
+
 %%
 
 int yyerror(char const* message)
