@@ -145,7 +145,7 @@ statement
 }
 | If left_br_small expr right_br_small program_sentense Else program_sentense %prec UMINUS{
 	TreeNode* node = new TreeNode($3->lineno, NODE_STMT);
- 	node->stype = STMT_IF;
+ 	node->stype = STMT_IF_ELSE;
  	node->addChild($3);
  	node->addChild($5);
  	node->addChild($7);
