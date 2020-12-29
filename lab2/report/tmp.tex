@@ -1,0 +1,245 @@
+\documentclass[UTF8]{ctexart}
+\usepackage{ctex}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor} 
+\usepackage[colorlinks,linkcolor=red]{hyperref}
+\usepackage{colortbl,booktabs}
+\bibliographystyle{acm}
+\title{预备工作2：定义你的编译器\&汇编编程}
+\author{冯杰康，计算机科学专业，1813402}
+\date{2020年10月}
+\lstset{
+    basicstyle=\ttfamily,
+    language=C++,
+    numbers=left, 
+    numberstyle= \tiny, 
+    keywordstyle= \color{ blue!60!green!45!},
+    commentstyle= \color{blue!90!},
+    tabsize=4,   
+    frame=shadowbox, % 阴影效果
+    numbersep=3pt,
+    rulesepcolor= \color{ red!20!green!20!blue!20} ,
+    escapeinside=``, % 英文分号中可写入中文
+    xleftmargin=2em,xrightmargin=2em, aboveskip=1em,
+    backgroundcolor=\color[RGB]{245,245,244},
+    framexleftmargin=2em
+}
+\begin{document}
+\maketitle
+\begin{abstract}
+    在本次实验的工作中，我们将要大体上设计我们所需要的编译器的语法结构，并且我们会设计
+    一部分CFG来描述我们的编译器，并且使其靠近C语言或者他的子集。这些语言特征我们也将在
+    之后的编译器实现上进行部分实现。
+    为了更加了解高级语言编译到汇编程序的过程，我们也会在本次共实验中将一个尽可能完整的
+    程序手工编译成汇编过程，之后详细解释了其中的过程，并且提升其普适性，将在其中使用
+    CFG和语法制导翻译等技术，并且进行汇编验证。
+\end{abstract}
+{\bf{关键词：编译器；汇编；CFG；}}
+\section{引言}
+    我们的编译器设计将在C语言的基础上进行设计，主要语法支持将为C语言的子集，会在部分语法文法上参考SysY系统进行
+    设计。SysY中进行\cite{SysY}了部分语言的概要设计，并且其在比赛中也取得了不错的成绩，我们的编译
+    系统也将要主要参考其进行设计。
+
+    在一个高级语言的编译成可执行程序的时候，会经过预处理器、编译器、汇编器、链接器加载器等过程。在最重要的编译器过程中，
+    将会经过词法分析、语法分析、语义分析、中间代码生成、代码优化、代码生成的过程，最终生成汇编代码。我们会进行一个将
+    C语言手工翻译成汇编代码的实验，并尝试进行跑通测试，总结近似的编译规律。
+\section{我的工作}
+实验主要分为两部分，第一部分为编译器的定义和设计，第二部分为汇编程序编程。
+\subsection{编译器定义}
+我们所了解的C语言支持很多语言特征，并且很多也有多种方式的支持，语言灵活度较大。
+\begin{itemize}
+    \item 多种数据类型的支持，如int，double等；
+    \item 循环、分支语句的支持，并且对于也有多种写法的支持,while和for，if和switch等，在新的c++11标准\cite{c11}中也支持了range—for等用法；
+    \item 变量的声明支持，其中也有常量，静态变量等多种声明方式的支持；
+    \item 多种运算的支持，位运算和加减乘除取模，并且在进行除法是也有不同的整除和浮点除法的不同支持，在其中也有类型转换等多种判断，但是并没有支持乘方（幂次）操作；
+    \item 逻辑运算的支持，有与或非异或，其他的逻辑运算可以用这些方式进行组合，并且区分位运算和逻辑运算的处理方式；关系运算的支持，对于大于小于等关系运算的支持，虽然详尽但是并不支持连续的关系运算，只能通过
+关系运算和逻辑运算两个组合进行处理，如"2<=a<=5"需要转化成"2<=a \&\& a<=5"进行运算；
+    \item 函数的调用机制，支持变量参数的传递，支持递归调用等方式，但是返回值有所限制，只能返回基本类型；
+    \item 数组和指针的语法支持，这也是在编码过程中比较复杂的一部分，由于C语言并不具备引用这种功能，因此指针传递
+是在函数传参和返回值上面重要应用位置，并且支持连续内存的定长数组，指针也可以指向函数结构体等。
+\end{itemize}
+    这些语法功能综合完成了最原始的C语言结构，C语言的标准在也不断扩充不断完善，有新的语法特征和新的语法功能加入其中，使得其更加方便安全，我们的工作
+    编译器也将完成其中的一个子集，之后进行不断扩充完善功能。
+
+\subsubsection{我的编译器}
+    在我们所要支持的编译器中，我们需要支持C语言的一个子集，完成最小的一个高级语言的编译工作。
+
+    我们计划支持一下语法结构，并且大部分将参考已经实现过的SysY\cite{SysY}的语法体系：
+    \begin{itemize}
+        \item 数据类型支持int，以及其支持的数组，并且在其中我们也将对多维数组采取行优先连续的方式存储；
+        \item 变量声明我们支持普通的声明以及常量声明；
+        \item 函数的支持，可以返回int值或者空置，也可以传入参数，支持传入数组参数和int参数；
+        \item 循环、分支语句的支持可以完成if语句和while语句的识别，并且在其中实现break和continue等特殊功能语句的实现，并且只其语句块内支持变量定义和语句嵌套等功能；
+        \item 支持算数运算，逻辑运算，位运算等运算方式，可以使用1代替true，使用0代替false；
+        \item 赋值语句和一般的声明赋初值等的支持；
+    \end{itemize}
+    以上的语法特点已经可以完成一个比较小的编译器了，并且在以上的支持之中还可以进行扩充。不断地扩充过程也是不断地
+    完善编译器的过程，从C语言的子集不断发展，以上便是我们设计的编译器所需要完成的基本任务。
+\subsubsection{CFG设计}
+    对于以上的自定义编译器，为了更快速的完成以后的工作，我们在此设计了其CFG，大部分参开于SysY\cite{SysY}，并且部分文法可以进行后续扩充，完善
+    编译器工作。
+
+    我们参考SysY并为之设计的CFG如下：
+    终结符为Ident，InstConst等符号，或者直接由引号引起
+    \begin{itemize}
+        \item 编译单元 CompUnit$\rightarrow$(CompUnit$\mid \epsilon$)(Decl $\mid$ FuncDef)
+        \item 基本类型： Btype $\rightarrow$ 'int'
+        \item 声明：Decl $\rightarrow$ ConstDecl $\mid$ VarDecl
+        \item 常量声明：ConstDecl  $\rightarrow$ 'const' Btype ConstDef (',' ConstDef)$^*$';'
+        \item 常量初值：ConstDef $\rightarrow$ ConstExp $\mid$ '\{'(ConstInitVal(','ConstInitVal)$^*$)$\mid \epsilon$'\}'
+        \item 常数定义：ConstDef $\rightarrow$ {\bf{Ident}} ('['ConstExp']')$^*$'='ConstOnitVal
+        \item 变量声明：ValDecl $\rightarrow$ BType VarDef (','Vardef)$^*$';'
+        \item 变量初值：InitVal$\rightarrow$Exp$\mid$'\{'(InitVal(','InitVal)$^*$)$\mid \epsilon$'\}'
+        \item 变量定义：FuncDef $\rightarrow$ {\bf{Ident}}('['ConstExp']')$^*$ $\mid$ {\bf{Ident}}('['ConstExp']')$^*$'='InitVal
+        \item 函数定义：FuncDef  $\rightarrow$ FuncType {\bf{Ident}} '(' (FuncParams$\mid \epsilon$) ')'Block
+        \item 语句块：Block $\rightarrow$ '\{'  $BlockItem^{*}$ '\}'
+        \item 函数类型： FuncType$\rightarrow$ 'void'$\mid$'int'
+        \item 函数形参列表：FuncParams$\rightarrow$ FuncParam(',' FuncParam)$^*$
+        \item 函数形参：FuncParam $\rightarrow$ BType {\bf{Ident}} '(' ('['']'('['Exp']')$^*$ $\mid \epsilon$)
+        \item 语句块项：BlockItem$\rightarrow$Decl$\mid$Stmt
+        \item 语句
+         Stmt $\rightarrow$ LVal'='Exp';'$\mid$(Exp$\mid \epsilon$';') $\mid$ Block $\mid$ 
+        'if' '('Cond')' Stmt (('else'Stmt) $\mid \epsilon$) $\mid$ 'while''('Cond')'Stmt $\mid$ 'break'';'$\mid$'continue'';'
+        $\mid$'return'(Exp$\mid \epsilon$)';'
+        \item 表达式：Exp$\rightarrow$AddExp
+        \item 条件表达式：Cond $\rightarrow$ LOrExp
+        \item 左值表达式：LVal $\rightarrow${\bf{Ident}}(('['Exp']')$\mid \epsilon$)
+        \item 基本表达式：PrimaryExp$\rightarrow$'('Exp')' $\mid$ LVal $\mid$ Number
+        \item 数值：Number$\rightarrow${\bf{IntConst}}
+        \item 一元表达式：UnaryExp$\rightarrow$Primary$\mid${\bf{Ident}}'('(FuncRParams$\mid \epsilon$)')'$\mid$UnaryOp UnaryExp
+        \item 单目运算符：UnaryOp$\rightarrow$'+'$\mid$'-'$\mid$'!'
+        \item 函数实参表：FuncRParams$\rightarrow$Exp(','Exp)$^*$
+        \item 乘除模表达式：MulExp$\rightarrow$UnaryExp$\mid$MulExp('*'$\mid$'/'$\mid$'\%')UnaryExp
+        \item 加减表达式：AddExp$\rightarrow$MulExp$\mid$AddExp('+'$\mid$'-')MulExp
+        \item 关系表达式：RelExp$\rightarrow$AddExp$\mid$RelExp('<'$\mid$'>'$\mid$'<='$\mid$'>=')AddExp
+        \item 相等性表达式：EqExp$\rightarrow$RelExp$\mid$EqExp('=='$\mid$'!=')RelExp
+        \item 逻辑与表达式：LAndExp$\rightarrow$EqExp$\mid$LAndExp'\&\&'EqExp
+        \item 逻辑或表达式：LOrExp$\rightarrow$LAndExp$\mid$LOrExp'||'EqExp
+        \item 常量表达式：ConstExp$\rightarrow$AddExp
+    \end{itemize}
+    以上参考SysY的语法定义系统，我们也计划在其中增加部分其他语法。
+    如do-while语法：Stmt$\rightarrow$'do' '\{'Stmt'\}' 'while' '(' Cond ')'，还有如三元运算符：
+    CalTree$\rightarrow$ Cond '?' Stmt ':' Stmt等等，都可以为后续的工作进行拓展实现。
+\subsection{汇编编程}
+为了提现尽可能多的语法特征，我们采用了计算斐波那契数列的代码进行汇编翻译工作，这样可以体现出C语言编译为汇编的大部分过程。
+C语言源代码如下：
+\begin{lstlisting}
+    #include<stdio.h>
+    int input;
+    int a=0,b=1;
+    int i=1;
+    int result;
+    int Fibonacci(int n)
+    {
+        while(i<n)
+        {
+            result=a+b;
+            a=b;
+            b=result;
+            i++;
+        }
+        return result;
+    }
+    
+    int main()
+    {
+        scanf("%d",&input);
+        printf("%d",Fibonacci(input));
+        return 0;
+    }
+\end{lstlisting}
+这是一个简易的计算斐波那契数列的小程序，我们在之后将其手工编译成汇编代码。
+
+在对比指导手册代码和部分gcc编译的汇编代码之后，我们将其手工编程成汇编程序如下：
+\begin{lstlisting}
+    .text
+    .globl Fibonacci
+    .type Fibonacci，@function
+#全局变量存储
+	.comm	input, 4, 2
+	.globl	a
+	.bss
+	.align 4
+a:
+	.space 4
+	.globl	b
+	.data
+	.align 4
+b:
+	.long	1
+	.globl	i
+	.align 4
+i:
+	.long	1
+	.comm	result, 4, 2
+    .section .rodata
+
+
+STR0:
+    .string "%d"
+STR1:
+    .string "%d"
+#函数
+
+L3:
+    movl a, %ecx
+    movl b, %edx
+    addl %ecx, %edx
+    movl %edx, result
+    movl b, %eax
+    movl %eax, a
+    movl result, %eax
+    movl %eax, b
+    movl i, %eax
+    addl $1, %eax
+    movl %eax, i
+
+Fibonacci:
+    movl 4(%esp), %eax
+    movl i, %ebx
+    cmpl  %ebx, %eax
+    jg L3
+# return result
+    movl result, %eax
+    ret
+
+
+
+
+
+
+     .text
+     .globl main
+     .type main, @function
+
+main:
+#输入数字
+    pushl $input
+    pushl $STR0
+    call scanf
+    addl $8, %esp
+#输出函数，并且调用的函数参数压栈
+    movl input, %edx
+    pushl %edx
+    call Fibonacci
+    addl $4, %esp
+# %eax保存返回值  
+    pushl %eax 
+    pushl $STR1
+    call printf
+    addl $8, %esp
+# return 0
+    movl $0, %eax
+    ret
+    .section .note.GNU-stack,"",@progbits
+\end{lstlisting}
+在使用qemu硬件模拟之后我们也得到了正确的结果。
+\section{结论及后续工作}
+本次实验中我们完成了我们的编译器的语法定义，并且进行的CFG的设计，在之后的工作中我们会进一步完善整个编译器，并且尽量实现编译器的扩充，
+如在其中加入double类型，加入switch和for支持等等，甚至对于指针等动作的支持。
+
+在汇编工作中，我们完成了32位汇编的工作，更好的了解的汇编和C语言源代码的对应过程。
+\bibliography{ref}
+\end{document}

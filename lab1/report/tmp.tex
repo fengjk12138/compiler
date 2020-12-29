@@ -1,0 +1,648 @@
+\documentclass[UTF8]{ctexart}
+\usepackage{ctex}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor} 
+\usepackage[colorlinks,linkcolor=red]{hyperref}
+\usepackage{colortbl,booktabs}
+\bibliographystyle{acm}
+\title{预备工作1：了解你的编译器}
+\author{冯杰康，计算机科学专业，1813402}
+\date{2020年10月}
+\lstset{
+    basicstyle=\ttfamily,
+    language=C++,
+    numbers=left, 
+    numberstyle= \tiny, 
+    keywordstyle= \color{ blue!60!green!45!},
+    commentstyle= \color{blue!90!},
+    tabsize=4,   
+    frame=shadowbox, % 阴影效果
+    numbersep=3pt,
+    rulesepcolor= \color{ red!20!green!20!blue!20} ,
+    escapeinside=``, % 英文分号中可写入中文
+    xleftmargin=2em,xrightmargin=2em, aboveskip=1em,
+    backgroundcolor=\color[RGB]{245,245,244},
+    framexleftmargin=2em
+}
+\begin{document}
+\maketitle
+\begin{abstract}
+    作为编程人员，编译工作是我们每天工作的基石，我们每天都需要进行编译工作，这背后的
+    原理我们将在这次工作中进行探索，并且详细了解每个过程中编译器为我们做的事情和我们代码的变化。
+    在本次的实验之中，增强了我们对编译器的认识，也了解了我们每天面对的编译工作的背后原理。
+
+    本次工作主要分为4个部分进行，也是现代编译器进行编译的四个步骤：(1)预处理器处理的过程，对于与编译命令的替换;
+    (2)编译器阶段，完成语法词法分析之后生成中间代码; (3)汇编器阶段，将汇编代码转换成机器码; (4)链接器加载器，完成部分库的链接，生成完整的可执行的
+    二进制文件。
+
+    我们完整探索了四个阶段，并且给出各个阶段内容的解读，可以更好地为以后编译理解工作作出贡献。
+\end{abstract}
+{\bf{关键词：编译器；汇编；C语言}}
+\section{引言}
+    当计算机刚刚被发明之时，其只能接受打孔纸带传入的机器指令进行运转，并且每个机器都拥有自己的
+    指令系统，使得编程工作十分繁琐，也极易出错。这时机器并不需要进行任何的编译工作，只需要进行读取指令之后执行即可。
+    之后逐渐引入了汇编语言进行编程，简化了编程的工作，此时汇编器也只用进行简单的转换。之后逐渐引入
+    高级语言FORTRAN进行编程\cite{FORTRAN}并且进行编译工作的开发。
+    
+    由于当初对于编译的原理性认识比较少，因此编译器的
+    设计工作非常困难。之后随着语法文法分析工作逐渐深入\cite{Chomsky}，编译工作的结构逐渐清晰。并且随着Yacc和Lex等工具的发明，编译的工作
+    也更加清晰简洁。
+    我们则是在成熟的$gcc/g++$编译器上进行研究以及实验，来了解整个编译工作的流程。
+\section{我的工作}
+    对于本次实验，我们重点在于了解每个过程中编译器帮助我们做了什么，完成了什么工作。我们将会替换标准程序的部分预编译头或者程序内部分数据的大小
+    以获得不同的对比，观察不同阶段的程序情况进行分析，完成对比实验。
+\subsection{预处理器}
+预编译器主要处理了预编译命令，如define，include，pragma，if 等编译命令，本小节将在实验中完成不同预编译命令的实验对比，重点介绍几个预编译命令。
+\subsubsection{define}
+因为在本次的实验中我们需要控制变量，不能同时使用define命令和include命令，我们使用的测试基础程序如下：
+
+\begin{lstlisting}
+#define a aphe
+#define b beta
+int main()
+{
+    int a = 114514;
+    int b = 19260817;
+    return 0;
+}
+\end{lstlisting}
+对于如上代码执行命令"gcc  main.c -E -o main.i"，我们即可得到完成预编译命令之后的代码，如下所示，明显看到，define进行了
+变量的替换，并且这件事是整个编译过程中最早做的。
+\begin{lstlisting}
+# 1 "main.c"
+# 1 "<built-in>"
+# 1 "<command-line>"
+# 1 "main.c"
+
+
+int main()
+{
+    int aphe = 114514;
+    int beta = 19260817;
+    return 0;
+}
+\end{lstlisting}
+最上方'\#'开头的为部分注释语句，表明了进行预编译的方式和文件名称等。
+
+
+\subsubsection{include}
+\label{注释}
+同上实验相同，我们在本小节中单独使用include预编译命令进行测试，进行编译过程的探索。
+基础程序使用的是实验手册中提供的'a+b'计算代码，如下：
+\begin{lstlisting}
+    #include<stdio.h>
+    int main()
+    {
+        int a,b;
+        scanf("%d%d",&a,&b);
+        //这是注释
+        printf("%d",a+b);
+        return 0;
+    }
+\end{lstlisting}
+执行命令之后我们得到了一段很大的程序，部分代码如下所示：
+\begin{lstlisting}
+# 1 "main.c"
+# 1 "<built-in>"
+# 1 "<command-line>"
+# 1 "main.c"
+...
+typedef struct tagLC_ID {
+  unsigned short wLanguage;
+  unsigned short wCountry;
+  unsigned short wCodePage;
+} LC_ID,*LPLC_ID;
+
+
+
+
+typedef struct threadlocaleinfostruct {
+  int refcount;
+  unsigned int lc_codepage;
+  unsigned int lc_collate_cp;
+  unsigned long lc_handle[6];
+  LC_ID lc_id[6];
+  struct {
+    char *locale;
+    wchar_t *wlocale;
+    int *refcount;
+    int *wrefcount;
+  } lc_category[6];
+  int lc_clike;
+  int mb_cur_max;
+  int *lconv_intl_refcount;
+  int *lconv_num_refcount;
+  int *lconv_mon_refcount;
+  struct lconv *lconv;
+  int *ctype1_refcount;
+  unsigned short *ctype1;
+  const unsigned short *pctype;
+  const unsigned char *pclmap;
+  const unsigned char *pcumap;
+  struct __lc_time_data *lc_time_curr;
+} threadlocinfo;
+...
+int __attribute__((__cdecl__)) feof(FILE *_File);
+int __attribute__((__cdecl__)) ferror(FILE *_File);
+int __attribute__((__cdecl__)) fflush(FILE *_File);
+int __attribute__((__cdecl__)) fgetc(FILE *_File);...
+# 2 "main.c" 2
+    
+# 2 "main.c"
+   int main()
+    {
+        int a,b;
+        scanf("%d%d",&a,&b);
+
+        printf("%d",a+b);
+        return 0;
+    }
+\end{lstlisting}
+由于产生的代码过长，因此完整代码可以点击\href{https://paste.ubuntu.com/p/F7ZSb8bvyh/}{这里}获取。
+观察得到，其中会有很多机器相关的注释标注已经部分<stdio.h>文件中的内容。
+可以从本次实验中了解到include命令主要的作用是将相应文件中的内容替换到调用它的文件中，进行预处理。
+这就是预编译期主要的作用。
+\subsubsection{部分拓展以及发现解释}
+对于预编译器来说其也可以完成部分复杂操作，比如包含if的define进行操作，可以更好地
+完成预编译工作，并且define命令也有更加复杂的用法，可以方便程序员进行部分简化编写。
+一个展示功能如下：
+源代码为：
+\begin{lstlisting}
+    #define max(a,b) a>b?a:b
+    int main(){
+        int a = 114514, b = 19260817;
+        int tmp = max(a,b);
+        return 0;
+    }
+\end{lstlisting}
+经过预编译器处理之后的代码为：
+\begin{lstlisting}
+# 1 "main.c"
+# 1 "<built-in>"
+# 1 "<command-line>"
+# 1 "main.c"
+
+    int main()
+    {
+        int a = 114514, b = 19260817;
+        int tmp = a>b?a:b;
+        return 0;
+    }
+
+\end{lstlisting}
+可以观察到预编译操作也可以很好地完成部分简化代码。
+
+预编译的另一个特征为：其不会进行语法语义检查，而是只完成'\#'开头的预编译
+命令，即使代码有语法问题也不会在这个阶段检查出来，并且在这个阶段会消除代码中的注释，
+这个现象可以在小节{\ref{注释}}的实验代码中可以看出来，注释被消除了。
+而不进行语法检查则可以从下面的实验看出：
+\begin{lstlisting}
+    #define a b
+    int main()
+    {
+        printf("%d",n);
+        return 0;
+    }
+
+\end{lstlisting}
+进行预编译处理之后的代码
+\begin{lstlisting}
+# 1 "main.c"
+# 1 "<built-in>"
+# 1 "<command-line>"
+# 1 "main.c"
+
+    int main()
+    {
+        printf("%d",n);
+        return 0;
+    }
+
+\end{lstlisting}
+在编译过程没有报错，而且并没有检查函数的错误和变量的错误。
+
+\subsection{编译器}
+% \begin{figure}[ht]
+%     \centering
+%     \includegraphics[height=5cm]{./img/支付.png}
+%     \includegraphics[height=5cm]{./img/验证.png}
+%     \caption{A发出广播后由其他人计算，之后其他人将计算结果广播，并由他人验证。}
+%     \label{fig:fu}
+% \end{figure}
+
+在编译器的处理过程中，其会将预处理之后的C代码编译为汇编语言，具体过程为：
+$$
+\mbox{词法分析}\rightarrow \mbox{语法分析}\rightarrow \mbox{语义分析} \rightarrow \mbox{中间代码生成} \rightarrow \mbox{代码优化} \rightarrow \mbox{代码生成}
+$$
+本节实验将会挑选其中几个过程进行详细实验分析。
+\subsubsection{语法分析}
+本节可以使用命令"gcc -fdump-tree-original-raw main.c"进行处理，之后会产生
+一个文件名为"main.c.003t.original"，其内容为以文本为展示所列出来的的AST树（抽象语法树），表明了
+语法分析阶段所做的语法分析工作。
+我们进行的实验代码为"a+b"代码：
+\begin{lstlisting}
+    #include<stdio.h>
+    int main()
+    {
+        int a,b;
+        scanf("%d%d",&a,&b);
+        printf("%d",a+b);
+        return 0;
+    }    
+\end{lstlisting}
+进行语法分析后的代码比较冗长，本文只给出部分代码，全部代码可以点击\href{https://paste.ubuntu.com/p/XCnsWDX527/}{这里}获取。
+部分代码如下：
+\begin{lstlisting}
+    ;; Function __debugbreak (null)
+;; enabled by -tree-original
+
+@1      bind_expr        type: @2       body: @3      
+@2      void_type        name: @4       algn: 8       
+@3      asm_expr         type: @2      
+@4      type_decl        name: @5       type: @2      
+@5      identifier_node  strg: void     lngt: 4       
+
+
+;; Function vfscanf (null)
+;; enabled by -tree-original
+...
+@46     tree_list        valu: @29      chan: @59     
+@47     tree_list        valu: @49      chan: @60     
+...
+@82     identifier_node  strg: sizetype lngt: 8       
+@83     integer_cst      type: @81     int: -1
+
+\end{lstlisting}
+并且在这个阶段会进行部分语法检查，会进行错误爆出已经警告。
+\subsubsection{中间代码生成}
+这个过程会有多个阶段的输出，使用命令"gcc -fdump-tree-all-graph main.c"明亮可以查看中间代码里
+不同语法树以及控制流程图的生成，因为中间过程比较繁多，因此会生成大量文件以".CFG"和".dot"结尾。
+部分dot文件代码如下：
+"main.c.232t.optimized.dot"的代码如下
+\begin{lstlisting}
+    subgraph "cluster_main" {
+	style="dashed";
+	color="black";
+	label="main ()";
+	fn_13_basic_block_0 [shape=Mdiamond,style=filled,fillcolor=white,label="ENTRY"];
+
+	fn_13_basic_block_1 [shape=Mdiamond,style=filled,fillcolor=white,label="EXIT"];
+
+	fn_13_basic_block_2 [shape=record,style=filled,fillcolor=lightgrey,label="{\<bb\ 2\>:\l\
+|scanf\ (\"%d%d\",\ &a,\ &b);\l\
+|a.0_1\ =\ a;\l\
+|b.1_2\ =\ b;\l\
+|_3\ =\ a.0_1\ +\ b.1_2;\l\
+|printf\ (\"%d\",\ _3);\l\
+|_7\ =\ 0;\l\
+|a\ =\{v\}\ \{CLOBBER\};\l\
+|b\ =\{v\}\ \{CLOBBER\};\l\
+}"];
+
+	fn_13_basic_block_3 [shape=record,style=filled,fillcolor=lightgrey,label="{\<bb\ 3\>:\l\
+|\<L1\>:\l\
+|return\ _7;\l\
+}"];
+
+	fn_13_basic_block_0:s -> fn_13_basic_block_2:n [style="solid,bold",color=blue,weight=100,constraint=true];
+	fn_13_basic_block_2:s -> fn_13_basic_block_3:n [style="solid,bold",color=blue,weight=100,constraint=true];
+	fn_13_basic_block_3:s -> fn_13_basic_block_1:n [style="solid,bold",color=black,weight=10,constraint=true];
+	fn_13_basic_block_0:s -> fn_13_basic_block_1:n [style="invis",constraint=true];
+}
+}
+\end{lstlisting}
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=3cm]{./img/dot.png}
+    \caption{对于"a+b"程序编译后的中间代码dot的可视化图}
+    \label{fig:aab}
+\end{figure}
+我们对于"main.c.027t.fixup\_cfg3.dot"进行可视化处理之后得到了一个流程图。图{\ref{fig:aab}
+}为编译器进行中间代码生成之后的运行数据流流向。
+
+
+\subsubsection{代码优化}
+本小结重点介绍代码优化的部分。
+对于C代码来说，编译器可以对其进行性能优化，从而减小其运行时间，但是可能会花费更长的编译时间。
+因此部分操作需要进行这种取舍。并且在部分特殊情况下，编译器的优化可能会降低程序的运行效率甚至直接使得程序产生错误，因此我们本次测试的实验结果
+仅供参考，详细的采纳请结合自己的实际情况进行。
+
+一般而言，gcc的代码优化级别分为-O0、-O1、-O2、-O3、-Og、-Os、-Ofast\cite{gcc编译}。常用的代码优化级别为-O0、-O1、-O2、-O3，
+而且对于后面的数字越大，优化程度越大，其他的几个优化级别为对于这几个优化级别的改进，因此，我们实验主要集中在这优化的探索上，我们分别
+实验了其编译时间和运行时间。因为普通的短程序需要的编译时间和运行时间很短，因此我们采用了算法导论\cite{算法导论}中的快速排序程序进行测试。
+基础程序代码如下（我们使用的编译命令为"gcc -Ox main.c -o main.exe"）：
+\begin{lstlisting}
+    #include<stdio.h>
+    int n,a[1000001];
+    
+    void swap(int &a,int &b)
+    {
+        int tmp=a;
+        a=b;
+        b=tmp;
+    }
+    void qsort(int l,int r)//应用二分思想
+    {
+        int mid=a[(l+r)/2];//中间数
+        int i=l,j=r;
+        do{
+            while(a[i]<mid) i++;//查找左半部分比中间数大的数
+            while(a[j]>mid) j--;//查找右半部分比中间数小的数
+            if(i<=j)//如果有一组不满足排序条件（左小右大）的数
+            {
+                swap(a[i],a[j]);//交换
+                i++;
+                j--;
+            }
+        }while(i<=j);//这里注意要有=
+        if(l<j) qsort(l,j);//递归搜索左半部分
+        if(i<r) qsort(i,r);//递归搜索右半部分
+    }
+    int main()
+    {
+        n=10000000;
+        srand(0);
+        for(int i=1;i<=n;i++)
+            a[i]=rand()%n+1;
+        qsort(1,n);
+    }
+\end{lstlisting}
+\begin{table}[ht]
+    \centering  
+    \caption{编译时间和运行时间(ms)} 
+    \label{table:o} 
+    \begin{tabular}  
+    {>{\columncolor{gray}}rccccc}  
+    \toprule[1pt]  
+    \rowcolor[gray]{0.9}    &-O0 &-O1   &-O2  &-O3  \\  
+    \midrule  
+    编译时间   &225   &228  &227  &275 \\  
+    运行时间   &1256   &1245  &1245  &1230\\  
+    \bottomrule[1pt]  
+    \end{tabular}   
+\end{table} 
+
+\begin{table}[ht]
+    \centering  
+    \caption{不同优化等级的汇编程序大小(KB)} 
+    \label{table:oo} 
+    \begin{tabular}  
+    {>{\columncolor{gray}}rccccc}  
+    \toprule[1pt]  
+    \rowcolor[gray]{0.9}    &-O0 &-O1   &-O2  &-O3  \\  
+    \midrule  
+    汇编程序大小   &3   &2  &3  &10 \\  
+    \bottomrule[1pt]  
+    \end{tabular}   
+\end{table}  
+我们对比不同的编译优化等级对于其编译时间以及运行时间的影响，结果如表{\ref{table:o}}所示\footnote{时间计算均使用多次运行取平均值}。
+
+对于编译优化来说，不同的等级有着不同的编译时间和运行时间，并且对于复杂庞大的程序来说这种差异更加明显。
+因为编译器在优化代码的过程中可能采用更加简洁的运算方式方便机器运行，或者减少某些虚假数据依赖，加快并行效率。
+因此我们应在实际编程中对编译优化进行取舍。
+并且我们在表{\ref{table:oo}}中也进行了不同的优化的代码的汇编程序大小的计算。
+
+\subsubsection{编译器部分实验的总结}
+对于编译器部分实验，我们进行了各个步骤之间的详细对比，因此我们可以看出来不同阶段编译器所完成的事情，
+并且通过不同的编译命令所进行的不同的控制，这正是本次实验后以后实验的重点内容，我们也将在未来的工作中详细
+分解和拓展编译器的内容知识。
+\section{汇编器}
+汇编器的工作主要是将汇编代码翻译成可执行程序进行计算，在这个过程中，人为可以编辑的代码将变成机器码，因此我们需要在这个阶段使用反编译工具进行
+实验，这样就可以将整个二进制文件转化为可以阅读的代码，并且进行对比和进一步实验。
+依然以{\ref{注释}}小节中的"a+b"代码作为实验的基础代码进行实验。
+使用命令"gcc main.i -S -o main.S"所获得的汇编代码如下：
+\begin{lstlisting}
+    .file	"main.c"
+	.text
+	.def	___main;	.scl	2;	.type	32;	.endef
+	.section .rdata,"dr"
+LC0:
+	.ascii "%d%d\0"
+LC1:
+	.ascii "%d\0"
+	.text
+	.globl	_main
+	.def	_main;	.scl	2;	.type	32;	.endef
+_main:
+LFB13:
+	.cfi_startproc
+	pushl	%ebp
+	.cfi_def_cfa_offset 8
+	.cfi_offset 5, -8
+	movl	%esp, %ebp
+	.cfi_def_cfa_register 5
+	andl	$-16, %esp
+	subl	$32, %esp
+	call	___main
+	leal	24(%esp), %eax
+	movl	%eax, 8(%esp)
+	leal	28(%esp), %eax
+	movl	%eax, 4(%esp)
+	movl	$LC0, (%esp)
+	call	_scanf
+	movl	28(%esp), %edx
+	movl	24(%esp), %eax
+	addl	%edx, %eax
+	movl	%eax, 4(%esp)
+	movl	$LC1, (%esp)
+	call	_printf
+	movl	$0, %eax
+	leave
+	.cfi_restore 5
+	.cfi_def_cfa 4, 4
+	ret
+	.cfi_endproc
+LFE13:
+	.ident	"GCC: (i686-posix-dwarf-rev0, Built by MinGW-W64 project) 8.1.0"
+	.def	_scanf;	.scl	2;	.type	32;	.endef
+	.def	_printf;	.scl	2;	.type	32;	.endef
+\end{lstlisting}
+而使用反编译命令"objdump -d main.o > main-anti-obj.S"得到的汇编代码如下：
+\begin{lstlisting}
+    
+main.o:     file format pe-i386
+
+
+Disassembly of section .text:
+
+00000000 <_main>:
+   0:	55                   	push   %ebp
+   1:	89 e5                	mov    %esp,%ebp
+   3:	83 e4 f0             	and    $0xfffffff0,%esp
+   6:	83 ec 20             	sub    $0x20,%esp
+   9:	e8 00 00 00 00       	call   e <_main+0xe>
+   e:	8d 44 24 18          	lea    0x18(%esp),%eax
+  12:	89 44 24 08          	mov    %eax,0x8(%esp)
+  16:	8d 44 24 1c          	lea    0x1c(%esp),%eax
+  1a:	89 44 24 04          	mov    %eax,0x4(%esp)
+  1e:	c7 04 24 00 00 00 00 	movl   $0x0,(%esp)
+  25:	e8 00 00 00 00       	call   2a <_main+0x2a>
+  2a:	8b 54 24 1c          	mov    0x1c(%esp),%edx
+  2e:	8b 44 24 18          	mov    0x18(%esp),%eax
+  32:	01 d0                	add    %edx,%eax
+  34:	89 44 24 04          	mov    %eax,0x4(%esp)
+  38:	c7 04 24 05 00 00 00 	movl   $0x5,(%esp)
+  3f:	e8 00 00 00 00       	call   44 <_main+0x44>
+  44:	b8 00 00 00 00       	mov    $0x0,%eax
+  49:	c9                   	leave  
+  4a:	c3                   	ret    
+  4b:	90                   	nop
+\end{lstlisting}
+使用命令"nm main.o > main-nm-obj.txt"获得了部分存储的助记符，这样结合反汇编代码可以完整进行整个程序的恢复。
+\begin{lstlisting}
+    00000000 b .bss
+    00000000 d .data
+    00000000 r .eh_frame
+    00000000 r .rdata
+    00000000 r .rdata$zzz
+    00000000 t .text
+             U ___main
+    00000000 T _main
+             U _printf
+             U _scanf
+     
+\end{lstlisting}
+可以观察到其中很多部分产生了变化部分助记符的函数名因为反编译过程消失，并且产生的可执行文件会更加简洁，确实多余的助记符。
+汇编器产生的代码主要为完成main函数内部的动作，并没有将scanf，printf等函数的具体可执行代码纳入进来。
+并且之前的汇编程序中部分字符串变量的存储也在反汇编程序中变为了地址的形式，因此汇编器的主要工作就是将汇编代码进行翻译，编程直接执行的二进制码，
+并且将部分声明，字符串，助记符进行转化，选择不同的寄存器进行存储，生成.o文件。
+\section{链接器和加载器}
+由于C语言代码是成多个部分进行编译的，这样可以避免因为修改某个小地方而进行全部编译的浪费时间，因此只完成了main.c的编译工作并没有完全结束，其生成的.o文件并不能直接执行。
+因此需要链接器，链接器负责将不同的部分进行链接，并且生成完整的可执行文件。比如小节{\ref{注释}}中的"a+b"代码就需要完成scanf和prinf等函数
+的链接工作，因此我们需要链接器完成。
+
+由于链接器直接生成的可执行程序是二进制程序，不具有高可读性，因此我们在本小节实验中依然需要反编译工具进行。
+使用命令"gcc -o main.exe main.o"完成连接工作，并且生成可执行程序main.exe，我们只需要点击main.exe就可以完成程序运行。此时工作的是
+加载器，其需要将外存的可执行程序加载入内存进行运算执行。当可执行程序运算完成之后，整个代码的周期，从编写到编译再到运行完整遍历，得到我们希望的结果。
+
+下面，我们将对于这部分工作进行分析和介绍。
+我们使用"objdump -d main.exe > main-anti-exe.S"进行反编译之后得到如下部分代码，完整代码可以在\href{https://paste.ubuntu.com/p/pR9mJ3hJx5/}{这里}获取：
+\begin{lstlisting}
+    main.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+00401000 <___mingw_invalidParameterHandler>:
+  401000:	f3 c3                	repz ret 
+  401002:	8d b4 26 00 00 00 00 	lea    0x0(%esi,%eiz,1),%esi
+  401009:	8d bc 27 00 00 00 00 	lea    0x0(%edi,%eiz,1),%edi
+  ...
+  00402700 <__CTOR_LIST__>:
+  402700:	ff                   	(bad)  
+  402701:	ff                   	(bad)  
+  402702:	ff                   	(bad)  
+  402703:	ff                   	.byte 0xff
+0040270c <__DTOR_LIST__>:
+  40270c:	ff                   	(bad)  
+  40270d:	ff                   	(bad)  
+  40270e:	ff                   	(bad)  
+  40270f:	ff 00                	incl   (%eax)
+  402711:	00 00                	add    %al,(%eax)
+	...
+\end{lstlisting}
+可以观察到，这个代码相较于main.o文件反编译得到的汇编代码长很多，因此其内部一定链接到了相关需要的包，以方便进行调用执行。
+并且，我们也可以在main.exe的反编译程序中发现main.o的反编译程序，在429行的"004015c0 <\_main>:"中，放入了main函数的相关汇编指令。
+
+之后我们使用了命令"nm main.exe > main-nm-exe.txt"查看了文件中部分助记符号。
+部分内容如下：
+\begin{lstlisting}
+004063d4 b .bss
+004063d4 b .bss   
+    ...
+00406010 b _envp
+004025f4 T _exit
+004019f0 T _fpreset
+004025ec T _fprintf
+004025e4 T _free
+00000000 A _FreeLibrary@4
+004025dc T _fwrite
+    ...
+00000000 A _VirtualProtect@16
+00000000 A _VirtualQuery@12
+0040639c b _was_init.67496
+00401480 T _WinMainCRTStartup
+00407108 i fthunk
+00407168 i fthunk
+0040709c i hname
+0040703c i hname
+\end{lstlisting}
+这样可以补充反编译代码中助记符缺失的状况。
+\begin{table}
+    \centering  
+    \caption{不同编译参数的文件大小(KB)} 
+    \label{table:ooo} 
+    \begin{tabular}  
+    {>{\columncolor{gray}}rccccc}  
+    \toprule[1pt]  
+    \rowcolor[gray]{0.9}    &有-static &无-static \\  
+    \midrule  
+    main.exe   &48   &98  \\  
+    main-anti-exe.S &443 &102\\
+    main-nm-exe.txt&32 &19\\
+    \bottomrule[1pt]  
+    \end{tabular}   
+\end{table}  
+之后的实验为对比编译选项"-static"的作用。"-static"主要是将部分依赖库完全集成进入可执行程序之中，使得程序不需要依赖外部程序即可运行。
+非静态编译当链接库被删除时，可执行程序将无法正常运行。
+由于一般的小型代码很难观察出来差别，因此我们使用了一个调用系统"libpthread.so"库的代码，如下：
+\begin{lstlisting}
+    #include <stdio.h>
+#include <pthread.h>
+
+/* this function is run by the second thread */
+void *thread_exe(void *x_void_ptr)
+{
+    /* increment x to 100 */
+    int *x_ptr = (int *)x_void_ptr;
+    while(++(*x_ptr) < 100);
+        printf("x increment finished\n");
+
+    return NULL;
+}
+
+int testFunc(int param)
+{
+    printf(" testFunc %i\n",param);
+    pthread_t inc_x_thread;
+    int x = 0, y = 0;
+    /* create a second thread which executes thread_exe(&y) */
+    if(pthread_create(&inc_x_thread, NULL, thread_exe, &x)) {
+        fprintf(stderr, "Error creating thread\n");
+        return 1;
+    }
+    /* increment y to 100 in the first thread */
+    while(++y < 100);
+
+    printf("y increment finished\n");
+
+    /* wait for the second thread to finish */
+    if(pthread_join(inc_x_thread, NULL)) {
+        fprintf(stderr, "Error joining thread\n");
+       return 2;
+    }
+
+    /* show the results - x is now 100 thanks to the second thread */
+    printf("x: %d, y: %d\n", x, y);
+    return 0;
+}
+
+int main(int argc, char* argv[])
+{
+    int a = 100;
+    testFunc(a);
+    return 1;
+}
+\end{lstlisting}
+
+上面的代码可以更好的帮助我们完成本次对于"-static"参数控制的实验。
+表{\ref{table:ooo}}中我们对比了这个参数对于不同文件大小的影响。
+并且可以从中得出结论对于需要减小程序大小，并且对于独立运行需求较小的代码可以使用非静态链接，反之使用静态链接。
+
+\section{总结和未来的工作}
+本次实验完整的进行了编译工作的整个流程梳理并且完成了部分中间过程的探索，很好的理解了不同阶段编译器所完成的工作，为后面的编译器编写
+打下了基础。并且在本次工作中，部分探索和实践并不完整，在未来的工作中希望得到改善。
+\bibliography{ref}
+\end{document}
