@@ -58,7 +58,7 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 "int" {beginDef=1; return T_INT;}
 "char" {beginDef=2;return T_CHAR;}
 "const" {return T_CONST;}
-
+"struct" {return T_STRUCT;}
 
 "=" return LOP_ASSIGN;
 
@@ -85,6 +85,7 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 "printf" return Printf;
 "&" return Get_Addr;
 "," return Interval;
+"." return Get_Member;
 
 
 
