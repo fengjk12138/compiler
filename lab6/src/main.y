@@ -44,10 +44,7 @@ program
 
 statements
 :  statement {$$=$1;}
-|  statements statement {$$=$1; $$->addSibling($2);}
-|  statements program_block{
-	$$=$1; $$->addSibling($2);
-}
+|  statements program_sentense {$$=$1; $$->addSibling($2);}
 ;
 
 program_block : left_br_big statements right_br_big{
@@ -64,6 +61,17 @@ program_block : left_br_big statements right_br_big{
 ;
 
 program_sentense: program_block {$$=$1;} | statement {$$=$1;}
+
+declaration_or_empty: declaration
+|
+;
+
+expr_or_empty:expr
+|
+;
+ASSIGN_or_empty: ASSIGN
+|
+;
 
 statement
 : SEMICOLON  {$$ = new TreeNode(lineno, NODE_STMT); $$->stype = STMT_SKIP;}
@@ -89,26 +97,14 @@ statement
 	node->addChild($4);
 	$$ = node;
 }
-| Void Main{
-	TreeNode* node = new TreeNode($2->lineno, NODE_STMT);
-	node->stype = STMT_MAIN;
-	$$ = node;
-}
-| While left_br_small expr right_br_small statement{
+| While left_br_small expr right_br_small program_sentense{
 	TreeNode* node = new TreeNode($3->lineno, NODE_STMT);
 	node->stype = STMT_WHILE;
 	node->addChild($3);
 	node->addChild($5);
 	$$ = node;
 }
-| While left_br_small expr right_br_small program_block{
-	TreeNode* node = new TreeNode($3->lineno, NODE_STMT);
-	node->stype = STMT_WHILE;
-	node->addChild($3);
-	node->addChild($5);
-	$$ = node;
-}
-| For left_br_small declaration  SEMICOLON  expr SEMICOLON ASSIGN right_br_small statement{
+| For left_br_small declaration_or_empty  SEMICOLON  expr_or_empty SEMICOLON ASSIGN_or_empty right_br_small program_sentense{
 	TreeNode* node = new TreeNode($3->lineno, NODE_STMT);
 	node->stype = STMT_FOR;
 	node->addChild($3);
@@ -117,25 +113,7 @@ statement
 	node->addChild($9);
 	$$ = node;
 }
-| For left_br_small declaration  SEMICOLON  expr SEMICOLON ASSIGN right_br_small program_block{
- 	TreeNode* node = new TreeNode($3->lineno, NODE_STMT);
- 	node->stype = STMT_FOR;
- 	node->addChild($3);
- 	node->addChild($5);
- 	node->addChild($7);
- 	node->addChild($9);
- 	$$ = node;
-}
-| For left_br_small ASSIGN  SEMICOLON  expr SEMICOLON ASSIGN right_br_small statement{
-	TreeNode* node = new TreeNode($3->lineno, NODE_STMT);
-	node->stype = STMT_FOR;
-	node->addChild($3);
-	node->addChild($5);
-	node->addChild($7);
-	node->addChild($9);
-	$$ = node;
-}
-| For left_br_small ASSIGN  SEMICOLON  expr SEMICOLON ASSIGN right_br_small program_block{
+| For left_br_small ASSIGN_or_empty  SEMICOLON  expr SEMICOLON ASSIGN right_br_small program_block{
  	TreeNode* node = new TreeNode($3->lineno, NODE_STMT);
  	node->stype = STMT_FOR;
  	node->addChild($3);
