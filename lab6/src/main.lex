@@ -57,6 +57,8 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 
 "int" {beginDef=1; return T_INT;}
 "char" {beginDef=2;return T_CHAR;}
+"const" {return T_CONST;}
+
 
 "=" return LOP_ASSIGN;
 

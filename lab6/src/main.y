@@ -6,7 +6,7 @@
     int yylex();
     int yyerror( char const * );
 %}
-%token T_CHAR T_INT T_STRING T_BOOL 
+%token T_CHAR T_INT T_STRING T_BOOL T_CONST
 
 %token LOP_ASSIGN 
 
@@ -159,7 +159,13 @@ statement
  	$$ = node;
 }
 ;
-
+//变量定义
+T: T_INT {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_INT;}
+| T_CHAR {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_CHAR;}
+| T_BOOL {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_BOOL;}
+| T_CONST T_INT
+| T_CONST T_CHAR
+;
 declaration: T define_list_inter {
     TreeNode* node = new TreeNode($1->lineno, NODE_STMT);
     node->stype = STMT_DECL;
@@ -168,8 +174,12 @@ declaration: T define_list_inter {
     $$ = node;   
 }
 ;
+//左值 可以被复制 如 a[100] a[i]  a b  a[c+d]这种
+LEFT_Val: IDENTIFIER
+| IDENTIFIER left_br_mid expr right_br_mid
+;
 
-define_list_inter: IDENTIFIER LOP_ASSIGN expr Interval define_list_inter{
+define_list_inter: LEFT_Val LOP_ASSIGN expr Interval define_list_inter{
 	TreeNode* node = new TreeNode($1->lineno, NODE_FORMT);
 	node->ftype = DEFINE_FORMAT_INIT;
 	node->addChild($1);
@@ -177,21 +187,21 @@ define_list_inter: IDENTIFIER LOP_ASSIGN expr Interval define_list_inter{
 	node->addSibling($5);
 	$$ = node;
 }
-| IDENTIFIER Interval define_list_inter{
+| LEFT_Val Interval define_list_inter{
 	TreeNode* node = new TreeNode($1->lineno, NODE_FORMT);
 	node->ftype = DEFINE_FORMAT;
 	node->addChild($1);
 	node->addSibling($3);
 	$$ = node;
 }
-| IDENTIFIER LOP_ASSIGN expr{
+| LEFT_Val LOP_ASSIGN expr{
 	TreeNode* node = new TreeNode($1->lineno, NODE_FORMT);
 	node->ftype = DEFINE_FORMAT_INIT;
 	node->addChild($1);
 	node->addChild($3);
 	$$ = node;
 }
-| IDENTIFIER{
+| LEFT_Val{
 	TreeNode* node = new TreeNode($1->lineno, NODE_FORMT);
 	node->ftype = DEFINE_FORMAT_INIT;
 	node->addChild($1);
@@ -331,10 +341,7 @@ expr
 }
 ;
 
-T: T_INT {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_INT;} 
-| T_CHAR {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_CHAR;}
-| T_BOOL {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_BOOL;}
-;
+
 
 ASSIGN: IDENTIFIER LOP_ASSIGN expr{
 	TreeNode* node = new TreeNode($1->lineno, NODE_STMT);
