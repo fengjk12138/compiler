@@ -41,6 +41,9 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 "%=" return mod_assgin;
 
 "void" return Void;
+"break" return BREAK;
+"CONTINUE" return CONTINUE;
+
 
 "==" return eql;
 "!=" return noteql;

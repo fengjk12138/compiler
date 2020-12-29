@@ -20,7 +20,7 @@
 
 %token left_br_small right_br_small left_br_mid rigth_br_mid left_br_big right_br_big
 
-%token Return If While For Main
+%token Return If While For Main BREAK CONTINUE
 
 %left LOP_EQ
 %left add_assgin sub_assgin mul_assgin div_assgin mod_assgin
@@ -77,6 +77,8 @@ statement
 : SEMICOLON  {$$ = new TreeNode(lineno, NODE_STMT); $$->stype = STMT_SKIP;}
 | declaration SEMICOLON {$$ = $1;}
 | ASSIGN SEMICOLON {$$ = $1;}
+| BREAK SEMICOLON
+| CONTINUE SEMICOLON
 | Return expr SEMICOLON {
 	TreeNode* node = new TreeNode($2->lineno, NODE_STMT);
 	node->stype = STMT_RET;
