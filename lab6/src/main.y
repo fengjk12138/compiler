@@ -147,7 +147,8 @@ statement
 
 //函数声明定义
 parameter_list: T IDENTIFIER {
-	$$ =new TreeNode($2->lineno, NODE_PARAM_LIST);
+	$$ =new TreeNode($2->lineno, NODE_FORMT);
+	$$->ftype=PARAM_LIST;
 	$$ -> addChild($1);
 	$$ -> addChild($2);
 }
@@ -206,14 +207,39 @@ declaration: T define_list_inter {
 ;
 
 //数组维度
-Array_Dim: left_br_mid expr right_br_mid Array_Dim
-|
+Array_Dim: left_br_mid expr right_br_mid Array_Dim{
+	if($4->nodeType==NODE_EMPTY){
+		$$=new TreeNode($2->lineno, NODE_FORMT);
+		$$->ftype=ARRAY_DIM;
+		$$->addChild($2);
+	}else{
+		$$=new TreeNode($2->lineno, NODE_FORMT);
+		$$->ftype=ARRAY_DIM;
+		$$->addChild($2);
+		$$->addChile($4->child);
+	}
+}
+| {$$ =new TreeNode(lineno, NODE_EMPTY);}
 ;
 
 
 //左值  右值 可以被复制 如 a[100] a[i]  a b  a[c+d] a.c这种
-IDENTIFIER_val: IDENTIFIER Array_Dim
-| IDENTIFIER_val Get_Member IDENTIFIER_val
+IDENTIFIER_val: IDENTIFIER Array_Dim{
+	$$ =new TreeNode($1->lineno, NODE_VAR);
+	$$->addChild($1);
+	$$->vartype=VAR_TYPE;
+	if($2->nodeType!=NODE_EMPTY){
+		$$->addChild($2);
+		$$->vartype=ARRAY_TYPE;
+	}
+
+}
+| IDENTIFIER_val Get_Member IDENTIFIER_val{
+	$$ =new TreeNode($1->lineno, NODE_VAR);
+	$$->addChild($1);
+	$$->addChild($3);
+	$$->vartype=STRUCT_TYPE;
+}
 ;
 
 define_list_inter: IDENTIFIER_val LOP_ASSIGN expr Interval define_list_inter{
@@ -224,7 +250,7 @@ define_list_inter: IDENTIFIER_val LOP_ASSIGN expr Interval define_list_inter{
 	node->addSibling($5);
 	$$ = node;
 }
-| IDENTIFIER_valInterval define_list_inter{
+| IDENTIFIER_val Interval define_list_inter{
 	TreeNode* node = new TreeNode($1->lineno, NODE_FORMT);
 	node->ftype = DEFINE_FORMAT;
 	node->addChild($1);

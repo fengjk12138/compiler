@@ -10,16 +10,17 @@ enum NodeType {
     NODE_EXPR,
     NODE_TYPE,
 
-    NODE_PARAM_LIST,
     NODE_FUNC,
     NODE_STRUCT,
-    NODE_FORMT,
+    NODE_FORMT, //递归列表的一种范式
     NODE_STMT,
     NODE_PROG, //整个程序
     NODE_EMPTY, //空语句，用于维持整个语法树的规整
 };
 
 enum ForMat{
+    PARAM_LIST,
+    ARRAY_DIM,
     SCANF_FORMAT_ADDR,
     SCANF_FORMAT,
     DEFINE_FORMAT_INIT,
@@ -50,6 +51,12 @@ enum ExpType {
 
     POS,// +4
     NEG,// -5
+};
+
+enum VarType{
+    ARRAY_TYPE,
+    STRUCT_TYPE,
+    VAR_TYPE,
 };
 
 enum StmtType {
@@ -115,6 +122,8 @@ public:
 
     //变量使用
     Type *type;  // 变量、类型、表达式结点，有类型。
+
+    VarType vartype;
     string var_name;
 //public:
 //    static string nodeType2String(NodeType type);
