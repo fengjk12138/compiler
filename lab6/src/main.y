@@ -79,7 +79,9 @@ statement
 | ASSIGN SEMICOLON {$$ = $1;}
 | BREAK SEMICOLON
 | CONTINUE SEMICOLON
-| Return expr SEMICOLON {
+| STRUCT_DEFINE SEMICOLON
+| FUNCTION SEMICOLON
+| Return expr_or_empty SEMICOLON {
 	TreeNode* node = new TreeNode($2->lineno, NODE_STMT);
 	node->stype = STMT_RET;
 	node->addChild($2);

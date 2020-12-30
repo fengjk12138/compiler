@@ -58,14 +58,14 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 "!" return NOT;
 
 
-"int" {beginDef=1; return T_INT;}
-"char" {beginDef=2;return T_CHAR;}
+"int" {return T_INT;}
+"char" {return T_CHAR;}
 "const" {return T_CONST;}
 "struct" {return T_STRUCT;}
 
 "=" return LOP_ASSIGN;
 
-";" {beginDef=0;return  SEMICOLON;}
+";" {return  SEMICOLON;}
 
 "(" return left_br_small;
 ")" return right_br_small;
