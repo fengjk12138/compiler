@@ -14,6 +14,7 @@ enum NodeType {
     NODE_FORMT,
     NODE_STMT,
     NODE_PROG, //整个程序
+    NODE_EMPTY, //空语句，用于维持整个语法树的规整
 };
 
 enum ForMat{
@@ -61,6 +62,8 @@ enum StmtType {
     STMT_ASSIGN_ADD_SELF,
     STMT_BLOCK,
     STMT_RET,
+    STMT_BREAK,
+    STMT_CONTINUE,
     STMT_SCANF,
     STMT_PRINT,
     STMT_MAIN,

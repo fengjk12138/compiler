@@ -64,25 +64,25 @@ program_sentense: program_block {$$=$1;}
 | statement {$$=$1;}
 ;
 
-declaration_or_empty: declaration
-|
+declaration_or_empty: declaration {$$=$1;}
+| {$$=new TreeNode(lineno, NODE_EMPTY);}
 ;
 
-expr_or_empty:expr
-|
+expr_or_empty:expr {$$=$1;}
+| {$$=new TreeNode(lineno, NODE_EMPTY);}
 ;
-ASSIGN_or_empty: ASSIGN
-|
+ASSIGN_or_empty: ASSIGN {$$=$1;}
+| {$$=new TreeNode(lineno, NODE_EMPTY);}
 ;
 
 statement
 : SEMICOLON  {$$ = new TreeNode(lineno, NODE_STMT); $$->stype = STMT_SKIP;}
 | declaration SEMICOLON {$$ = $1;}
 | ASSIGN SEMICOLON {$$ = $1;}
-| BREAK SEMICOLON
-| CONTINUE SEMICOLON
-| STRUCT_DEFINE SEMICOLON
-| FUNCTION
+| BREAK SEMICOLON {$$ = new TreeNode(lineno, NODE_STMT); $$->stype = STMT_BREAK;}
+| CONTINUE SEMICOLON {$$ = new TreeNode(lineno, NODE_STMT); $$->stype = STMT_CONTINUE;}
+| STRUCT_DEFINE SEMICOLON {$$ = $1;}
+| FUNCTION {$$ = $1;}
 | Return expr_or_empty SEMICOLON {
 	TreeNode* node = new TreeNode($2->lineno, NODE_STMT);
 	node->stype = STMT_RET;
@@ -146,8 +146,12 @@ statement
 ;
 
 //函数声明定义
-parameter_list: T IDENTIFIER
-| T IDENTIFIER Interval parameter_list
+parameter_list: T IDENTIFIER {
+
+}
+| T IDENTIFIER Interval parameter_list {
+
+}
 ;
 parameter_list_or_empty: parameter_list
 |
