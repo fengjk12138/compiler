@@ -10,6 +10,7 @@ enum NodeType {
     NODE_EXPR,
     NODE_TYPE,
 
+    NODE_PARAM_LIST,
     NODE_FUNC,
     NODE_FORMT,
     NODE_STMT,

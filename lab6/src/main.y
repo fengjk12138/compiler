@@ -147,22 +147,37 @@ statement
 
 //函数声明定义
 parameter_list: T IDENTIFIER {
-
+	$$ =new TreeNode($2->lineno, NODE_PARAM_LIST);
+	$$ -> addChild($1);
+	$$ -> addChild($2);
 }
 | T IDENTIFIER Interval parameter_list {
-
+	$$ = $4;
+	$$ -> addChild($1);
+        $$ -> addChild($2);
 }
 ;
-parameter_list_or_empty: parameter_list
-|
+parameter_list_or_empty: parameter_list {$$ = $1;}
+| {$$=new TreeNode(lineno, NODE_EMPTY);}
 ;
 
 
-FUNCTION: T IDENTIFIER left_br_small parameter_list_or_empty right_br_right program_sentense
+FUNCTION: T IDENTIFIER left_br_small parameter_list_or_empty right_br_right program_sentense{
+	$$ = new TreeNode($->lineno,NODE_FUNC);
+	$$ ->
+	$$ -> addChild($1);
+	$$ -> addChild($2);
+	$$ -> addChild($4);
+	$$ -> addChild($6);
+}
 ;
 
 //结构体定义
-STRUCT_DEFINE: T_STRUCT IDENTIFIER program_block
+STRUCT_DEFINE: T_STRUCT IDENTIFIER program_block{
+
+}
+;
+
 
 //变量定义
 T: T_INT {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_INT;}
