@@ -140,6 +140,19 @@ statement
  	$$ = node;
 }
 ;
+
+//函数声明定义
+parameter_list: T IDENTIFIER
+| T IDENTIFIER Interval parameter_list
+;
+parameter_list_or_empty: parameter_list
+|
+;
+
+
+FUNCTION: T IDENTIFIER left_br_small parameter_list_or_empty right_br_right program_sentense
+;
+
 //结构体定义
 STRUCT_DEFINE: T_STRUCT IDENTIFIER program_block
 
@@ -153,6 +166,8 @@ T: T_INT {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_INT;}
 | T_CHAR mul
 | T_STRUCT IDENTIFIER
 ;
+
+
 
 declaration: T define_list_inter {
     TreeNode* node = new TreeNode($1->lineno, NODE_STMT);
