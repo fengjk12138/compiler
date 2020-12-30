@@ -164,7 +164,7 @@ parameter_list_or_empty: parameter_list {$$ = $1;}
 
 FUNCTION: T IDENTIFIER left_br_small parameter_list_or_empty right_br_right program_sentense{
 	$$ = new TreeNode($->lineno,NODE_FUNC);
-	$$ ->
+	$$ -> var_name=$2->var_name;
 	$$ -> addChild($1);
 	$$ -> addChild($2);
 	$$ -> addChild($4);
@@ -174,7 +174,10 @@ FUNCTION: T IDENTIFIER left_br_small parameter_list_or_empty right_br_right prog
 
 //结构体定义
 STRUCT_DEFINE: T_STRUCT IDENTIFIER program_block{
-
+	$$ = new TreeNode($->lineno,NODE_STRUCT);
+	$$ -> var_name=$2->var_name;
+	$$ -> addChild($2);
+	$$ -> addChild($3);
 }
 ;
 
@@ -183,11 +186,12 @@ STRUCT_DEFINE: T_STRUCT IDENTIFIER program_block{
 T: T_INT {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_INT;}
 | T_CHAR {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_CHAR;}
 | T_BOOL {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_BOOL;}
-| T_CONST T_INT
-| T_CONST T_CHAR
-| T_INT mul
-| T_CHAR mul
-| T_STRUCT IDENTIFIER
+| T_CONST T_INT {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = VALUE_INT_CONST;}
+| T_CONST T_CHAR {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = VALUE_CHAR_CONST;}
+| T_INT mul {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = VALIE_INT_POINTER;}
+| T_CHAR mul {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = VALIE_CHAR_POINTER;}
+| T_STRUCT IDENTIFIER {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = COMPOSE_STRUCT;}
+| Void {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = VALUE_VOID;}
 ;
 
 

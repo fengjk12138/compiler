@@ -12,6 +12,7 @@ enum NodeType {
 
     NODE_PARAM_LIST,
     NODE_FUNC,
+    NODE_STRUCT,
     NODE_FORMT,
     NODE_STMT,
     NODE_PROG, //整个程序
