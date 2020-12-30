@@ -10,9 +10,10 @@ enum NodeType {
     NODE_EXPR,
     NODE_TYPE,
 
+    NODE_FUNC,
     NODE_FORMT,
     NODE_STMT,
-    NODE_PROG,
+    NODE_PROG, //整个程序
 };
 
 enum ForMat{
@@ -94,14 +95,21 @@ public:
 
 public:
     ExpType exptype;
-    Type *type;  // 变量、类型、表达式结点，有类型。
+
     StmtType stype;
     ForMat ftype;
+
+
+
+    //常量使用
     int var_id;
     int int_val;
     char ch_val;
     bool b_val;
     string str_val;
+
+    //变量使用
+    Type *type;  // 变量、类型、表达式结点，有类型。
     string var_name;
 //public:
 //    static string nodeType2String(NodeType type);
@@ -113,6 +121,11 @@ public:
 public:
     TreeNode(int lineno, NodeType type);
 };
+
+struct Var_type{
+
+};
+
 
 struct VarNode {
     static int nodeID;

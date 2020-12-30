@@ -43,8 +43,8 @@ program
 
 
 statements
-:  statement {$$=$1;}
-|  statements program_sentense {$$=$1; $$->addSibling($2);}
+:  statement {$$= new TreeNode(lineno, NODE_STMT); $$->stype = STMT_BLOCK; $$->addChild($1);}
+|  statements statement {$$=$1; $$->addSibling($2);}
 ;
 
 program_block : left_br_big statements right_br_big{
@@ -54,13 +54,15 @@ program_block : left_br_big statements right_br_big{
     	$$ = node;
 }
 | left_br_big right_br_big{
-	TreeNode* node = new TreeNode(-1, NODE_STMT);
+	TreeNode* node = new TreeNode(lineno, NODE_STMT);
     	node->stype = STMT_BLOCK;
     	$$ = node;
 }
 ;
 
-program_sentense: program_block {$$=$1;} | statement {$$=$1;}
+program_sentense: program_block {$$=$1;}
+| statement {$$=$1;}
+;
 
 declaration_or_empty: declaration
 |
@@ -80,7 +82,7 @@ statement
 | BREAK SEMICOLON
 | CONTINUE SEMICOLON
 | STRUCT_DEFINE SEMICOLON
-| FUNCTION SEMICOLON
+| FUNCTION
 | Return expr_or_empty SEMICOLON {
 	TreeNode* node = new TreeNode($2->lineno, NODE_STMT);
 	node->stype = STMT_RET;
