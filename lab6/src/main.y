@@ -244,59 +244,175 @@ IDENTIFIER_val: IDENTIFIER Array_Dim{
 
 define_list_inter: IDENTIFIER_val LOP_ASSIGN expr Interval define_list_inter{
 	TreeNode* node = new TreeNode($1->lineno, NODE_FORMT);
-	node->ftype = DEFINE_FORMAT_INIT;
-	node->addChild($1);
-	node->addChild($3);
-	node->addSibling($5);
+	node->ftype = DEFINE_LIST;
+	TreeNode* node2 = new TreeNode($1->lineno, NODE_FORMT);
+        node2->ftype = DEFINE_FORMAT_INIT;
+	node2->addChild($1);
+	node2->addChild($3);
+	node->addChild(node2);
+	node->addChild($5->child);
 	$$ = node;
 }
 | IDENTIFIER_val Interval define_list_inter{
 	TreeNode* node = new TreeNode($1->lineno, NODE_FORMT);
-	node->ftype = DEFINE_FORMAT;
-	node->addChild($1);
-	node->addSibling($3);
+	node->ftype = DEFINE_LIST;
+	TreeNode* node2 = new TreeNode($1->lineno, NODE_FORMT);
+	node2->ftype = DEFINE_FORMAT;
+	node2->addChild($1);
+	node->addChild(node2);
+	node->addChild($3->child);
 	$$ = node;
 }
 | IDENTIFIER_val LOP_ASSIGN expr{
 	TreeNode* node = new TreeNode($1->lineno, NODE_FORMT);
-	node->ftype = DEFINE_FORMAT_INIT;
-	node->addChild($1);
-	node->addChild($3);
+	node->ftype = DEFINE_LIST;
+	TreeNode* node2 = new TreeNode($1->lineno, NODE_FORMT);
+	node2->ftype = DEFINE_FORMAT_INIT;
+	node2->addChild($1);
+	node2->addChild($3);
+	node->addChild(node2);
 	$$ = node;
 }
 | IDENTIFIER_val{
 	TreeNode* node = new TreeNode($1->lineno, NODE_FORMT);
-	node->ftype = DEFINE_FORMAT_INIT;
-	node->addChild($1);
+	node->ftype = DEFINE_LIST;
+	TreeNode* node2 = new TreeNode($1->lineno, NODE_FORMT);
+	node2->ftype = DEFINE_FORMAT;
+	node2->addChild($1);
+	node->addChild(node2);
 	$$ = node;
 }
 ;
 
 //表达式
 
-Cal_expr: expr add expr
-| expr sub expr
-| expr mul expr
-| expr div_char expr
-| expr mod_char expr
-| sub expr %prec UMINUS
-| add expr %prec UMINUS
-| mul IDENTIFIER_val %prec UMINUS
-| Get_Addr IDENTIFIER_val %prec UMINUS
+Cal_expr: expr add expr{
+	TreeNode* node = new TreeNode($1->lineno, NODE_EXPR);
+	node->ftype = ADD;
+	node->addChild($1);
+	node->addChild($3);
+	$$ = node;
+}
+| expr sub expr{
+	TreeNode* node = new TreeNode($1->lineno, NODE_EXPR);
+	node->ftype = SUB;
+	node->addChild($1);
+	node->addChild($3);
+	$$ = node;
+}
+| expr mul expr{
+	TreeNode* node = new TreeNode($1->lineno, NODE_EXPR);
+	node->ftype = MUL;
+	node->addChild($1);
+	node->addChild($3);
+	$$ = node;
+}
+| expr div_char expr{
+	TreeNode* node = new TreeNode($1->lineno, NODE_EXPR);
+	node->ftype = DIV;
+	node->addChild($1);
+	node->addChild($3);
+	$$ = node;
+}
+| expr mod_char expr{
+	TreeNode* node = new TreeNode($1->lineno, NODE_EXPR);
+	node->ftype = MOD;
+	node->addChild($1);
+	node->addChild($3);
+	$$ = node;
+}
+| sub expr %prec UMINUS{
+	TreeNode* node = new TreeNode($1->lineno, NODE_EXPR);
+	node->ftype = NEG;
+	node->addChild($2);
+	$$ = node;
+}
+| add expr %prec UMINUS{
+	TreeNode* node = new TreeNode($1->lineno, NODE_EXPR);
+	node->ftype = POS;
+	node->addChild($2);
+	$$ = node;
+}
+| mul IDENTIFIER_val %prec UMINUS{
+	TreeNode* node = new TreeNode($1->lineno, NODE_EXPR);
+	node->ftype = POINTER;
+	node->addChild($2);
+	$$ = node;
+}
+| Get_Addr IDENTIFIER_val %prec UMINUS{
+	TreeNode* node = new TreeNode($1->lineno, NODE_EXPR);
+	node->ftype = ADDRESS;
+	node->addChild($2);
+	$$ = node;
+}
 ;
 
-Bool_expr: expr eql expr
-| expr noteql expr
-| expr bigeql expr
-| expr smalleql expr
-| expr big expr
-| expr small expr
+Bool_expr: expr eql expr{
+	TreeNode* node = new TreeNode($1->lineno, NODE_EXPR);
+	node->ftype = EQL;
+	node->addChild($1);
+	node->addChild($3);
+	$$ = node;
+}
+| expr noteql expr{
+	TreeNode* node = new TreeNode($1->lineno, NODE_EXPR);
+	node->ftype = NOTEQL;
+	node->addChild($1);
+	node->addChild($3);
+	$$ = node;
+}
+| expr bigeql expr{
+	TreeNode* node = new TreeNode($1->lineno, NODE_EXPR);
+	node->ftype = BIGEQL;
+	node->addChild($1);
+	node->addChild($3);
+	$$ = node;
+}
+| expr smalleql expr{
+	TreeNode* node = new TreeNode($1->lineno, NODE_EXPR);
+	node->ftype = SMALLEQL;
+	node->addChild($1);
+	node->addChild($3);
+	$$ = node;
+}
+| expr big expr{
+	TreeNode* node = new TreeNode($1->lineno, NODE_EXPR);
+	node->ftype = BIG;
+	node->addChild($1);
+	node->addChild($3);
+	$$ = node;
+}
+| expr small expr{
+	TreeNode* node = new TreeNode($1->lineno, NODE_EXPR);
+	node->ftype = SMALL;
+	node->addChild($1);
+	node->addChild($3);
+	$$ = node;
+}
 ;
 
-Bool_Cal_expr: expr OR expr
-| expr AND expr
-| NOT expr;
-
+Bool_Cal_expr: expr OR expr{
+	TreeNode* node = new TreeNode($1->lineno, NODE_EXPR);
+	node->ftype = OR_BOOL;
+	node->addChild($1);
+	node->addChild($3);
+	$$ = node;
+}
+| expr AND expr{
+	TreeNode* node = new TreeNode($1->lineno, NODE_EXPR);
+	node->ftype = AND_BOOL;
+	node->addChild($1);
+	node->addChild($3);
+	$$ = node;
+}
+| NOT expr{
+	TreeNode* node = new TreeNode($1->lineno, NODE_EXPR);
+	node->ftype = NOT_BOOL;
+	node->addChild($1);
+	node->addChild($3);
+	$$ = node;
+}
+;
 
 expr
 : IDENTIFIER_val{
@@ -311,10 +427,10 @@ expr
 | STRING {
     $$ = $1;
 }
-| left_br_small expr right_br_small
-| Cal_expr
-| Bool_expr
-| Bool_Cal_expr
+| left_br_small expr right_br_small	{$$ = $2;}
+| Cal_expr	{$$ = $1;}
+| Bool_expr	{$$ = $1;}
+| Bool_Cal_expr	{$$ = $1;}
 ;
 
 

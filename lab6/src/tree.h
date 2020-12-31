@@ -19,6 +19,7 @@ enum NodeType {
 };
 
 enum ForMat{
+    DEFINE_LIST,
     PARAM_LIST,
     ARRAY_DIM,
     SCANF_FORMAT,
@@ -50,6 +51,9 @@ enum ExpType {
 
     POS,// +4
     NEG,// -5
+
+    POINTER,//指针
+    ADDRESS,//取地址
 };
 
 enum VarType{
