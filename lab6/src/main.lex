@@ -18,16 +18,14 @@ CHAR \'.?\'
 STRING \".+\"
 BOOL_CONST "true"|"false"
 
-left_br_mid "["
-right_br_mid "]"
-
 IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 %%
 
 {BLOCKCOMMENT}  /* do nothing */
 {LINECOMMENT}  /* do nothing */
 
-
+"[" return left_br_mid;
+"]" return right_br_mid;
 "+" {return add;}
 "++" {return add_self;}
 "-" return sub;
