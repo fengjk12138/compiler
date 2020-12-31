@@ -2,7 +2,7 @@
 %{
 #include "common.h"
 #include "main.tab.h"  // yacc header
-//int lineno=1;
+int lineno=1;
 //int beginDef=0;
 //VarNode *root_var = new VarNode;
 //VarNode *now = root_var;

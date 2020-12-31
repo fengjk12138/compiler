@@ -187,12 +187,12 @@ STRUCT_DEFINE: T_STRUCT IDENTIFIER program_block{
 T: T_INT {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_INT;}
 | T_CHAR {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_CHAR;}
 | T_BOOL {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_BOOL;}
-| T_CONST T_INT {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = VALUE_INT_CONST;}
-| T_CONST T_CHAR {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = VALUE_CHAR_CONST;}
-| T_INT mul {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = VALIE_INT_POINTER;}
-| T_CHAR mul {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = VALIE_CHAR_POINTER;}
-| T_STRUCT IDENTIFIER {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = COMPOSE_STRUCT;}
-| Void {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = VALUE_VOID;}
+| T_CONST T_INT {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_INT_CONST;}
+| T_CONST T_CHAR {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_CHAR_CONST;}
+| T_INT mul {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_INT_POINTER;}
+| T_CHAR mul {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_CHAR_POINTER;}
+| T_STRUCT IDENTIFIER {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_COMPOSE_STRUCT;}
+| Void {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_VOID;}
 ;
 
 
@@ -216,7 +216,7 @@ Array_Dim: left_br_mid expr right_br_mid Array_Dim{
 		$$=new TreeNode($2->lineno, NODE_FORMT);
 		$$->ftype=ARRAY_DIM;
 		$$->addChild($2);
-		$$->addChile($4->child);
+		$$->addChild($4->child);
 	}
 }
 | {$$ =new TreeNode(lineno, NODE_EMPTY);}

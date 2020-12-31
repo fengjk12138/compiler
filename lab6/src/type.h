@@ -54,6 +54,12 @@ static Type *TYPE_CHAR = new Type(VALUE_CHAR);
 static Type *TYPE_BOOL = new Type(VALUE_BOOL);
 static Type *TYPE_STRING = new Type(VALUE_STRING);
 static Type *TYPE_VOID = new Type(VALUE_VOID);
+static Type *TYPE_INT_CONST=new Type(VALUE_INT_CONST);
+static Type *TYPE_CHAR_CONST=new Type(VALUE_CHAR_CONST);
+static Type *TYPE_INT_POINTER=new Type(VALIE_INT_POINTER);
+static Type *TYPE_CHAR_POINTER=new Type(VALIE_CHAR_POINTER);
+static Type *TYPE_COMPOSE_STRUCT=new Type(COMPOSE_STRUCT);
+
 
 int getSize(Type *type);
 
