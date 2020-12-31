@@ -408,8 +408,7 @@ Bool_Cal_expr: expr OR expr{
 | NOT expr{
 	TreeNode* node = new TreeNode($1->lineno, NODE_EXPR);
 	node->ftype = NOT_BOOL;
-	node->addChild($1);
-	node->addChild($3);
+	node->addChild($2);
 	$$ = node;
 }
 ;
