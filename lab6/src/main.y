@@ -18,7 +18,7 @@
 %token Else
 %token Void Scanf Printf Get_Addr Interval
 
-%token left_br_small right_br_small left_br_mid rigth_br_mid left_br_big right_br_big
+%token left_br_small right_br_small left_br_mid right_br_mid left_br_big right_br_big
 
 %token Return If While For Main BREAK CONTINUE
 
