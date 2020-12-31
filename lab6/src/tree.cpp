@@ -43,4 +43,10 @@ void VarNode::addChild(VarNode *child) {
 
 void TreeNode::genTable() {
 
+
+
+}
+void TreeNode::printAST()
+{
+
 }
