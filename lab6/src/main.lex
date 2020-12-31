@@ -2,10 +2,10 @@
 %{
 #include "common.h"
 #include "main.tab.h"  // yacc header
-int lineno=1;
-int beginDef=0;
-VarNode *root_var = new VarNode;
-VarNode *now = root_var;
+//int lineno=1;
+//int beginDef=0;
+//VarNode *root_var = new VarNode;
+//VarNode *now = root_var;
 %}
 BLOCKCOMMENT \/\*([^\*^\/]*|[\*^\/*]*|[^\**\/]*)*\*\/
 LINECOMMENT \/\/[^\n]*
@@ -28,8 +28,8 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 {LINECOMMENT}  /* do nothing */
 
 
-"+" {printf("+");return add;}
-"++" {printf("-");return add_self;}
+"+" {return add;}
+"++" {return add_self;}
 "-" return sub;
 "*" return mul;
 "/" return div_char;
@@ -70,9 +70,9 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 "(" return left_br_small;
 ")" return right_br_small;
 
-"{" {VarNode *tmp=new VarNode;now->addChild(tmp);now = tmp;return left_br_big;}
+"{" {return left_br_big;}
 
-"}" {now = now->fa;return right_br_big;}
+"}" {return right_br_big;}
 
 "return" return Return;
 "if" return If;
