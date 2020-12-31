@@ -371,7 +371,7 @@ ASSIGN: IDENTIFIER_val LOP_ASSIGN expr{
 
 Scanf_format:Interval expr Scanf_format{
 	TreeNode* node = new TreeNode($3->lineno, NODE_FORMT);
-   	node->ftype = SCANF_FORMAT_ADDR;
+   	node->ftype = SCANF_FORMAT;
    	node->addChild($3);
    	if($4!=nullptr){
     		node->addSibling($4);

@@ -21,7 +21,6 @@ enum NodeType {
 enum ForMat{
     PARAM_LIST,
     ARRAY_DIM,
-    SCANF_FORMAT_ADDR,
     SCANF_FORMAT,
     DEFINE_FORMAT_INIT,
     DEFINE_FORMAT,
