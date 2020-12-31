@@ -79,11 +79,6 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 "else" return Else;
 "while" return While;
 "for" return For;
-"main()" {
-    TreeNode* node = new TreeNode(lineno, NODE_STMT);
-    yylval = node;
-    return Main;
-}
 "scanf" return Scanf;
 "printf" return Printf;
 "&" return Get_Addr;
@@ -94,7 +89,7 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 
 {INTEGER} {
     TreeNode* node = new TreeNode(lineno, NODE_CONST);
-    node->type = TYPE_INT;
+    node->vartype = CONST_INT_TYPE;
     node->int_val = atoi(yytext);
     yylval = node;
     return INTEGER;
@@ -102,15 +97,15 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 
 {CHAR} {
     TreeNode* node = new TreeNode(lineno, NODE_CONST);
-    node->type = TYPE_CHAR;
-    node->int_val = yytext[1];
+    node->vartype = CONST_CHAR_TYPE;
+    node->ch_val = yytext[0];
     yylval = node;
     return CHAR;
 }
 
 {BOOL_CONST} {
     TreeNode* node = new TreeNode(lineno, NODE_CONST);
-    node->type = TYPE_BOOL;
+    node->vartype = CONST_BOOL_TYPE;
     node->b_val = string(yytext)==string("true");
     yylval = node;
     return BOOL_CONST;
@@ -119,24 +114,6 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 {IDENTIFIER} {
     TreeNode* node = new TreeNode(lineno, NODE_VAR);
     node->var_name = string(yytext);
-
-
-    if(beginDef){
-        now -> var[node->var_name]=make_pair(++VarNode::nodeID, beginDef == 1 ? TYPE_INT : TYPE_CHAR);
-        node->var_id = VarNode::nodeID;
-    }else{
-        VarNode *tmp = now;
-        int thisNodeid=-1;
-        while(tmp != nullptr){
-            if(tmp->var.find(node->var_name) == tmp->var.end()){
-                tmp=tmp->fa;
-            }else{
-                thisNodeid=tmp -> var[node->var_name].first;
-                break;
-            }
-        }
-        node->var_id = thisNodeid;
-    }
     yylval = node;
     return IDENTIFIER;
 }
@@ -144,7 +121,7 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 
 {STRING} {
     TreeNode* node = new TreeNode(lineno, NODE_CONST);
-    node->type = TYPE_STRING;
+    node->vartype = CONST_STRING_TYPE;
     node->str_val = string(yytext);
     yylval = node;
     return STRING;

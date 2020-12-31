@@ -60,6 +60,11 @@ enum VarType{
     ARRAY_TYPE,
     STRUCT_TYPE,
     VAR_TYPE,
+    CONST_BOOL_TYPE,
+    CONST_INT_TYPE,
+    CONST_CHAR_TYPE,
+    CONST_STRING_TYPE,
+
 };
 
 enum StmtType {
@@ -124,9 +129,9 @@ public:
     string str_val;
 
     //变量使用
-    Type *type;  // 变量、类型、表达式结点，有类型。
+    Type *type;  // int void char变量、类型、表达式结点，有类型。
 
-    VarType vartype;
+    VarType vartype; //变量(常量)的类型
     string var_name;
 //public:
 //    static string nodeType2String(NodeType type);
