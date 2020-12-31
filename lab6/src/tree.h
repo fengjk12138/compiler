@@ -103,15 +103,8 @@ public:
     void addChild(TreeNode *);
 
     void addSibling(TreeNode *);
-
-    void printNodeInfo();
-
-    void printChildrenId();
-
     void printAST(); // 先输出自己 + 孩子们的id；再依次让每个孩子输出AST。
-    void printSpecialInfo();
-
-    void genNodeId();
+    void genTable();
 
 public:
     ExpType exptype;
