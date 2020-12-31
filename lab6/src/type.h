@@ -53,7 +53,7 @@ static Type *TYPE_INT = new Type(VALUE_INT);
 static Type *TYPE_CHAR = new Type(VALUE_CHAR);
 static Type *TYPE_BOOL = new Type(VALUE_BOOL);
 static Type *TYPE_STRING = new Type(VALUE_STRING);
-static Type *TYPE_VOID = new Type(TYPE_VOID);
+static Type *TYPE_VOID = new Type(VALUE_VOID);
 
 int getSize(Type *type);
 

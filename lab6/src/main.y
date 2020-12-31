@@ -43,7 +43,7 @@ program
 
 
 statements
-:  statement {$$= new TreeNode(lineno, NODE_STMT); $$->stype = STMT_BLOCK; $$->addChild($1);}
+:  statement {$$= new TreeNode(yylineno, NODE_STMT); $$->stype = STMT_BLOCK; $$->addChild($1);}
 |  statements statement {$$=$1; $$->addSibling($2);}
 ;
 
@@ -54,7 +54,7 @@ program_block : left_br_big statements right_br_big{
     	$$ = node;
 }
 | left_br_big right_br_big{
-	TreeNode* node = new TreeNode(lineno, NODE_STMT);
+	TreeNode* node = new TreeNode(yylineno, NODE_STMT);
     	node->stype = STMT_BLOCK;
     	$$ = node;
 }
@@ -65,22 +65,22 @@ program_sentense: program_block {$$=$1;}
 ;
 
 declaration_or_empty: declaration {$$=$1;}
-| {$$=new TreeNode(lineno, NODE_EMPTY);}
+| {$$=new TreeNode(yylineno, NODE_EMPTY);}
 ;
 
 expr_or_empty:expr {$$=$1;}
-| {$$=new TreeNode(lineno, NODE_EMPTY);}
+| {$$=new TreeNode(yylineno, NODE_EMPTY);}
 ;
 ASSIGN_or_empty: ASSIGN {$$=$1;}
-| {$$=new TreeNode(lineno, NODE_EMPTY);}
+| {$$=new TreeNode(yylineno, NODE_EMPTY);}
 ;
 
 statement
-: SEMICOLON  {$$ = new TreeNode(lineno, NODE_STMT); $$->stype = STMT_SKIP;}
+: SEMICOLON  {$$ = new TreeNode(yylineno, NODE_STMT); $$->stype = STMT_SKIP;}
 | declaration SEMICOLON {$$ = $1;}
 | ASSIGN SEMICOLON {$$ = $1;}
-| BREAK SEMICOLON {$$ = new TreeNode(lineno, NODE_STMT); $$->stype = STMT_BREAK;}
-| CONTINUE SEMICOLON {$$ = new TreeNode(lineno, NODE_STMT); $$->stype = STMT_CONTINUE;}
+| BREAK SEMICOLON {$$ = new TreeNode(yylineno, NODE_STMT); $$->stype = STMT_BREAK;}
+| CONTINUE SEMICOLON {$$ = new TreeNode(yylineno, NODE_STMT); $$->stype = STMT_CONTINUE;}
 | STRUCT_DEFINE SEMICOLON {$$ = $1;}
 | FUNCTION {$$ = $1;}
 | Return expr_or_empty SEMICOLON {
@@ -159,7 +159,7 @@ parameter_list: T IDENTIFIER {
 }
 ;
 parameter_list_or_empty: parameter_list {$$ = $1;}
-| {$$=new TreeNode(lineno, NODE_EMPTY);}
+| {$$=new TreeNode(yylineno, NODE_EMPTY);}
 ;
 
 
@@ -184,15 +184,15 @@ STRUCT_DEFINE: T_STRUCT IDENTIFIER program_block{
 
 
 //变量定义
-T: T_INT {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_INT;}
-| T_CHAR {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_CHAR;}
-| T_BOOL {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_BOOL;}
-| T_CONST T_INT {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = VALUE_INT_CONST;}
-| T_CONST T_CHAR {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = VALUE_CHAR_CONST;}
-| T_INT mul {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = VALIE_INT_POINTER;}
-| T_CHAR mul {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = VALIE_CHAR_POINTER;}
-| T_STRUCT IDENTIFIER {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = COMPOSE_STRUCT;}
-| Void {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = VALUE_VOID;}
+T: T_INT {$$ = new TreeNode(yylineno, NODE_TYPE); $$->type = TYPE_INT;}
+| T_CHAR {$$ = new TreeNode(yylineno, NODE_TYPE); $$->type = TYPE_CHAR;}
+| T_BOOL {$$ = new TreeNode(yylineno, NODE_TYPE); $$->type = TYPE_BOOL;}
+| T_CONST T_INT {$$ = new TreeNode(yylineno, NODE_TYPE); $$->type = VALUE_INT_CONST;}
+| T_CONST T_CHAR {$$ = new TreeNode(yylineno, NODE_TYPE); $$->type = VALUE_CHAR_CONST;}
+| T_INT mul {$$ = new TreeNode(yylineno, NODE_TYPE); $$->type = VALIE_INT_POINTER;}
+| T_CHAR mul {$$ = new TreeNode(yylineno, NODE_TYPE); $$->type = VALIE_CHAR_POINTER;}
+| T_STRUCT IDENTIFIER {$$ = new TreeNode(yylineno, NODE_TYPE); $$->type = COMPOSE_STRUCT;}
+| Void {$$ = new TreeNode(yylineno, NODE_TYPE); $$->type = VALUE_VOID;}
 ;
 
 
@@ -219,7 +219,7 @@ Array_Dim: left_br_mid expr right_br_mid Array_Dim{
 		$$->addChile($4->child);
 	}
 }
-| {$$ =new TreeNode(lineno, NODE_EMPTY);}
+| {$$ =new TreeNode(yylineno, NODE_EMPTY);}
 ;
 
 
