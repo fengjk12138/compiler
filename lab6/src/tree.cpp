@@ -1,7 +1,6 @@
 #include "tree.h"
 
-int VarNode::nodeID = 0;
-int TreeNode::nowID = 0;
+using namespace std;
 
 void TreeNode::addChild(TreeNode *child) {
     if (this->child == nullptr) {
@@ -28,25 +27,53 @@ TreeNode::TreeNode(int lineno, NodeType type) {
     this->nodeType = type;
 }
 
-void VarNode::addChild(VarNode *child) {
-    if (this->child == nullptr) {
-        this->child = child;
-    } else {
-        VarNode *tmp = this->child;
-        while (tmp->sibling != nullptr) {
-            tmp = tmp->sibling;
+void TreeNode::genTable(namespore *nowtable) {
+    if (this->nodeType == NODE_PROG) {
+        this->child->genTable(nowtable);
+    } else if (this->nodeType == NODE_STMT) {
+        if (this->stype == STMT_DECL) {
+            auto child2 = this->child->sibling;//参数列表
+            auto child1 = this->child;
+            for (auto now = child2->child; now != nullptr; now = now->sibling) {
+                {
+                    //now define list
+                    //now child define_with_init
+                    //now child child IDENTIFIER
+                    if (nowtable->var.find(now->child->child->var_name) != nowtable->var.end()) {
+                        yyerror("Repeated definition");
+                    }
+                    if (now->child->vartype == VAR_TYPE) {
+                        if (child1->type == TYPE_INT)
+                            nowtable->var[now->child] = VarNode(INT);
+                        else if (child1->type == TYPE_CHAR)
+                            nowtable->var[now->child] = VarNode(CHAR);
+                        else if (child1->type == TYPE_INT_CONST)
+                            nowtable->var[now->child] = VarNode(CONST_INT);
+                        else if (child1->type == TYPE_CHAR_CONST)
+                            nowtable->var[now->child] = VarNode(CONST_CHAR);
+                    } else if (now->child->vartype == ARRAY_TYPE) {
+                        if (child1->type == TYPE_INT)
+                            nowtable->var[now->child] = VarNode(INT_ARRAY);
+                        else if (child1->type == TYPE_CHAR)
+                            nowtable->var[now->child] = VarNode(CHAR_ARRAY);
+                        else if (child1->type == TYPE_INT_CONST)
+                            nowtable->var[now->child] = VarNode(CONST_INT_ARRAY);
+                        else if (child1->type == TYPE_CHAR_CONST)
+                            nowtable->var[now->child] = VarNode(CONST_CHAR_ARRAY);
+                        nowtable->var[now->child].arr_dim = now->child->child->sibling->array_dim;
+                    } else {
+                        yyerror("not right type");
+                    }
+                }
+            }
         }
-        tmp->sibling = child;
+
+
     }
-    child->fa = this;
-}
-
-void TreeNode::genTable() {
-
 
 
 }
-void TreeNode::printAST()
-{
+
+void TreeNode::printAST() {
 
 }

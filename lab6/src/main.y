@@ -2,6 +2,8 @@
     #include "common.h"
     #define YYSTYPE TreeNode *  
     TreeNode* root;
+    namespore* tableRoot;
+
     extern int lineno;
     int yylex();
     int yyerror( char const * );
@@ -243,6 +245,7 @@ Array_Dim: left_br_mid expr right_br_mid Array_Dim{
 		$$->addChild($2);
 		$$->addChild($4->child);
 	}
+	$$->array_dim++;
 }
 | {$$ =new TreeNode(lineno, NODE_EMPTY);}
 ;
@@ -257,6 +260,7 @@ IDENTIFIER_val: IDENTIFIER Array_Dim{
 		$$->addChild($2);
 		$$->vartype=ARRAY_TYPE;
 	}
+	$$->array_dim=$2->array_dim;
 
 }
 | IDENTIFIER_val Get_Member IDENTIFIER_val{

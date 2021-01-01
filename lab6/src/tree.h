@@ -19,7 +19,7 @@ enum NodeType {
     NODE_EMPTY, //空语句，用于维持整个语法树的规整
 };
 
-enum ForMat{
+enum ForMat {
     DEFINE_LIST,
     PARAM_LIST,
     PARAM_LIST_CALL,
@@ -58,7 +58,7 @@ enum ExpType {
     ADDRESS,//取地址
 };
 
-enum VarType{
+enum VarType {
     ARRAY_TYPE,
     STRUCT_TYPE,
     VAR_TYPE,
@@ -96,8 +96,6 @@ enum StmtType {
 
 struct TreeNode {
 public:
-    static int nowID;
-    int nodeID;  // 用于作业的序号输出
     int lineno;
     NodeType nodeType;
 
@@ -107,15 +105,15 @@ public:
     void addChild(TreeNode *);
 
     void addSibling(TreeNode *);
+
     void printAST(); // 先输出自己 + 孩子们的id；再依次让每个孩子输出AST。
-    void genTable();
+    void genTable(namespore *);
 
 public:
     ExpType exptype;
 
     StmtType stype;
     ForMat ftype;
-
 
 
     //常量使用
@@ -127,7 +125,7 @@ public:
 
     //变量使用
     Type *type;  // int void char变量、类型、表达式结点，有类型。
-
+    int array_dim=0;
     VarType vartype; //变量(常量)的类型
     string var_name;
 //public:
@@ -141,20 +139,42 @@ public:
     TreeNode(int lineno, NodeType type);
 };
 
-struct Var_type{
 
+enum Basetype {
+    INT,
+    CHAR,
+    CONST_INT,
+    CONST_CHAR,
+    CONST_INT_ARRAY,
+    CONST_CHAR_ARRAY,
+    INT_ARRAY,
+    CHAR_ARRAY,
+    STRUCT,
+};
+enum Spetype {
+    STRUCT_VAR,
+    FUNC_VAR,
+};
+
+struct VarNode {
+    int pos;
+    int arr_dim = 0;
+    Spetype spetype;
+    Basetype basetype;
+
+    VarNode(Basetype a) {
+        this->basetype = a;
+    }
 };
 
 
-struct VarNode {
-    static int nodeID;
-    int lineno;
-    VarNode *fa = nullptr;
-    std::map <std::string, std::pair<int, Type *>> var;
-    VarNode *child = nullptr;
-    VarNode *sibling = nullptr;
+struct namespore {
+    namespore *fa = nullptr;
+    std::map <std::string, VarNode> var;
+    namespore *child = nullptr;
+    namespore *sibling = nullptr;
 
-    void addChild(VarNode *);
+    bool findExit()
 };
 
 #endif
