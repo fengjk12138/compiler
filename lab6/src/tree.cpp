@@ -27,6 +27,8 @@ TreeNode::TreeNode(int lineno, NodeType type) {
     this->nodeType = type;
 }
 
+bool in_function = 0;
+
 void TreeNode::genTable(namespore *nowtable) {
     if (this->nodeType == NODE_PROG) {
         this->child->genTable(nowtable);
@@ -67,12 +69,56 @@ void TreeNode::genTable(namespore *nowtable) {
                 }
             }
         }
+    } else if (this->nodeType == NODE_FUNC) {
+        in_function = 1;
+        string function_name = this->child->sibling->var_name;
+        if (nowtable->var.find(function_name) != nowtable->var.end()) {
+            yyerror("Repeated definition");
+        }
+        nowtable->var[function_name] = VarNode(FUNC);
+        if(this->child->type==TYPE_INT){
+            nowtable->var[function_name].returnType=INT;
+        }else if(this->child->type==TYPE_CHAR){
+            nowtable->var[function_name].returnType=CHAR;
+        }else{
+            yyerror("function return in these type not implement");
+        }
+        nowtable = nowtable->newChild();
+        //参数列表
+        auto temp=this->child->sibling->sibling;
 
+
+
+        //函数体
+        auto tmp = this->child->sibling->sibling->sibling->child;
+        while (tmp != nullptr) {
+            genTable(nowtable);
+            tmp = tmp->sibling;
+        }
+        nowtable = nowtable->fa;
+        in_function = 0;
+    } else if (this->nodeType == NODE_STRUCT) {
 
     }
 
 
 }
+
+namespore *namespore::newChild() {
+    if (this->child == nullptr) {
+        this->child = new namespore();
+        this->child->fa = this;
+        return this->child;
+    } else {
+        auto tmp = this->child;
+        while (tmp->sibling != nullptr)
+            tmp = tmp->sibling;
+        tmp->sibling = new namespore();
+        tmp->sibling->fa = this;
+        return tmp->sibling;
+    }
+}
+
 
 void TreeNode::printAST() {
 

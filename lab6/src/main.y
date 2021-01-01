@@ -3,7 +3,6 @@
     #define YYSTYPE TreeNode *  
     TreeNode* root;
     namespore* tableRoot;
-
     extern int lineno;
     int yylex();
     int yyerror( char const * );
@@ -46,14 +45,14 @@ program
 
 statements
 :  statement {$$= new TreeNode(lineno, NODE_STMT); $$->stype = STMT_BLOCK; $$->addChild($1);}
-|  statements statement {$$=$1; $$->addSibling($2);}
+|  statements statement {$$=$1; $$->child->addSibling($2);}
 ;
 
 program_block : left_br_big statements right_br_big{
-	TreeNode* node = new TreeNode($2->lineno, NODE_STMT);
-    	node->stype = STMT_BLOCK;
-    	node->addChild($2);
-    	$$ = node;
+//	TreeNode* node = new TreeNode($2->lineno, NODE_STMT);
+//    	node->stype = STMT_BLOCK;
+//    	node->addChild($2);
+    	$$ = $2;
 }
 | left_br_big right_br_big{
 	TreeNode* node = new TreeNode(lineno, NODE_STMT);
@@ -85,7 +84,7 @@ statement
 | CONTINUE SEMICOLON {$$ = new TreeNode(lineno, NODE_STMT); $$->stype = STMT_CONTINUE;}
 | STRUCT_DEFINE SEMICOLON {$$ = $1;}
 | FUNCTION {$$ = $1;}
-| FUNCTION_CALL SEMICOLON {$$ = $1;$$->stype=STMT_FUNCTION_CALL;}
+| FUNCTION_CALL SEMICOLON {$$ = $1;$$->nodeType=NODE_STMT;$$->stype=STMT_FUNCTION_CALL;}
 | Return expr_or_empty SEMICOLON {
 	TreeNode* node = new TreeNode($2->lineno, NODE_STMT);
 	node->stype = STMT_RET;
@@ -168,7 +167,7 @@ parameter_list_or_empty: parameter_list {$$ = $1;}
 ;
 
 
-FUNCTION: T IDENTIFIER left_br_small parameter_list_or_empty right_br_small program_sentense{
+FUNCTION: T IDENTIFIER left_br_small parameter_list_or_empty right_br_small program_block{
 	$$ = new TreeNode($1->lineno,NODE_FUNC);
 	$$ -> var_name=$2->var_name;
 	$$ -> addChild($1);

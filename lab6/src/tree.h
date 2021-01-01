@@ -150,6 +150,7 @@ enum Basetype {
     INT_ARRAY,
     CHAR_ARRAY,
     STRUCT,
+    FUNC,
 };
 enum Spetype {
     STRUCT_VAR,
@@ -159,6 +160,7 @@ enum Spetype {
 struct VarNode {
     int pos;
     int arr_dim = 0;
+    Basetype returnType;
     Spetype spetype;
     Basetype basetype;
 
@@ -173,6 +175,7 @@ struct namespore {
     std::map <std::string, VarNode> var;
     namespore *child = nullptr;
     namespore *sibling = nullptr;
+    namespore* newChild();
 
     bool findExit()
 };
