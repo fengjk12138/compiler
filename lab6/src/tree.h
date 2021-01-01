@@ -10,6 +10,7 @@ enum NodeType {
     NODE_EXPR,
     NODE_TYPE,
 
+    NODE_FUNC_CALL,
     NODE_FUNC,
     NODE_STRUCT,
     NODE_FORMT, //递归列表的一种范式
@@ -21,6 +22,7 @@ enum NodeType {
 enum ForMat{
     DEFINE_LIST,
     PARAM_LIST,
+    PARAM_LIST_CALL,
     ARRAY_DIM,
     SCANF_FORMAT,
     DEFINE_FORMAT_INIT,
@@ -81,6 +83,8 @@ enum StmtType {
     STMT_RET,
     STMT_BREAK,
     STMT_CONTINUE,
+    STMT_FUNCTION_CALL,
+    STMT_FUNCTION_CALL_GIVEN,
     STMT_SCANF,
     STMT_PRINT,
     STMT_MAIN,

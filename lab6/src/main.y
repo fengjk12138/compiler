@@ -83,6 +83,7 @@ statement
 | CONTINUE SEMICOLON {$$ = new TreeNode(lineno, NODE_STMT); $$->stype = STMT_CONTINUE;}
 | STRUCT_DEFINE SEMICOLON {$$ = $1;}
 | FUNCTION {$$ = $1;}
+| FUNCTION_CALL SEMICOLON {$$ = $1;$$->stype=STMT_FUNCTION_CALL;}
 | Return expr_or_empty SEMICOLON {
 	TreeNode* node = new TreeNode($2->lineno, NODE_STMT);
 	node->stype = STMT_RET;
@@ -153,9 +154,11 @@ parameter_list: T IDENTIFIER {
 	$$ -> addChild($2);
 }
 | T IDENTIFIER Interval parameter_list {
-	$$ = $4;
+	$$ = new TreeNode($2->lineno, NODE_FORMT);
+	$$->ftype=PARAM_LIST;
 	$$ -> addChild($1);
         $$ -> addChild($2);
+        $$ -> addChild($4->child);
 }
 ;
 parameter_list_or_empty: parameter_list {$$ = $1;}
@@ -172,6 +175,28 @@ FUNCTION: T IDENTIFIER left_br_small parameter_list_or_empty right_br_small prog
 	$$ -> addChild($6);
 }
 ;
+
+parameter_list_call: IDENTIFIER_val {
+	$$ =new TreeNode($1->lineno, NODE_FORMT);
+	$$->ftype=PARAM_LIST_CALL;
+	$$ -> addChild($1);
+}
+| IDENTIFIER_val Interval parameter_list_call{
+	$$ = new TreeNode($1->lineno, NODE_FORMT);
+	$$->ftype=PARAM_LIST_CALL;
+	$$ -> addChild($1);
+        $$ -> addChild($3->child);
+}
+;
+parameter_list_call_or_empty: parameter_list_call {$$ = $1;}
+|  {$$=new TreeNode(lineno, NODE_EMPTY);}
+;
+
+FUNCTION_CALL: IDENTIFIER left_br_small parameter_list_call_or_empty right_br_small{
+	$$ = new TreeNode($1->lineno,NODE_FUNC_CALL);
+	$$ -> addChild($1);
+	$$ -> addChild($3);
+}
 
 //结构体定义
 STRUCT_DEFINE: T_STRUCT IDENTIFIER program_block{
@@ -477,10 +502,17 @@ ASSIGN: IDENTIFIER_val LOP_ASSIGN expr{
     	$$ = node;
 }
 | IDENTIFIER_val add_self{
-      TreeNode* node = new TreeNode($1->lineno, NODE_STMT);
-      node->stype = STMT_ASSIGN_ADD_SELF;
-      node->addChild($1);
-      $$ = node;
+	TreeNode* node = new TreeNode($1->lineno, NODE_STMT);
+	node->stype = STMT_ASSIGN_ADD_SELF;
+	node->addChild($1);
+	$$ = node;
+}
+| IDENTIFIER_val LOP_ASSIGN FUNCTION_CALL{
+	TreeNode* node = new TreeNode($1->lineno, NODE_STMT);
+	node->stype = STMT_FUNCTION_CALL_GIVEN;
+	node->addChild($1);
+	node->addChild($3);
+	$$ = node;
 }
 ;
 
