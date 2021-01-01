@@ -150,6 +150,7 @@ public:
 
     void addChild(TreeNode *);
     VarNode getExprType(namespore* );
+    VarNode getIdValType(namespore* );
     void addSibling(TreeNode *);
     static void cerror(const char *mess);
     void printAST(); // 先输出自己 + 孩子们的id；再依次让每个孩子输出AST。

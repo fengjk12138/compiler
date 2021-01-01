@@ -1,5 +1,6 @@
 #include "tree.h"
-namespore* tpyetableRoot;
+
+namespore *typetableRoot;
 using namespace std;
 
 void TreeNode::addChild(TreeNode *child) {
@@ -125,12 +126,12 @@ void TreeNode::genTable(namespore *nowtable) {
             //返回值类型检查
             if (this->child->nodeType != NODE_EMPTY) {
                 auto exprtype = this->child->getExprType(nowtable);
-                auto func_var = tpyetableRoot->var[in_function].returnType;
+                auto func_var = typetableRoot->var[in_function].returnType;
                 if (exprtype.basetype != func_var) {
                     cerror("return type can not adapt");
                 }
             } else {
-                auto func_var = tpyetableRoot->var[in_function].returnType;
+                auto func_var = typetableRoot->var[in_function].returnType;
                 if (func_var != RETVOID) {
                     cerror("return type can not adapt");
                 }
@@ -273,8 +274,77 @@ void TreeNode::printAST() {
 
 }
 
-VarNode TreeNode::getExprType(namespore *nowtable) {
 
+VarNode TreeNode::getIdValType(namespore *nowtable) {
+    //todo
+}
+
+VarNode TreeNode::getExprType(namespore *nowtable) {
+    if (this->nodeType == NODE_STMT) {
+        auto tmp1 = this->child->getIdValType(nowtable);
+        if (this->child->sibling != nullptr) {
+            auto tmp2 = this->child->sibling->getExprType(nowtable);
+            if (tmp2.basetype != tmp1.basetype) {
+                cerror("only same type can assgin each other");
+            }
+        }
+        return VarNode(tmp1.basetype);
+    } else if (this->nodeType == NODE_EXPR) {
+
+        if (this->exptype == INTEGER_VAL)
+            return VarNode(INT);
+        else if (this->exptype == CHAR_VAL)
+            return VarNode(CHARR);
+        else if (this->exptype == STRING_VAL) {
+            cerror("not support string in calculate");
+        } else if (this->exptype == IDENTIFIER_VAL) {
+            return VarNode(this->getIdValType(nowtable));
+        } else if (this->exptype == FUNC_CALL) {
+            if (typetableRoot->var.find(this->child->var_name) != typetableRoot->var.end()) {
+                return VarNode(typetableRoot->var[this->child->var_name].returntype);
+            } else {
+                cerror("no such function");
+            }
+        } else if (this->exptype == OR_BOOL || this->exptype == AND_BOOL) {
+            auto tmp1 = this->child->getExprType(nowtable);
+            auto tmp2 = this->child->sibling->getExprType(nowtable);
+            if (tmp1.basetype != tmp2.basetype || tmp1.basetype != BOOLL) {
+                cerror("or / and calculate only be used in bool");
+            }
+            return VarNode(BOOLL);
+        } else if (this->exptype == NOT_BOOL) {
+            auto tmp1 = this->child->getExprType(nowtable);
+            if (tmp1.basetype != BOOLL) {
+                cerror("NOT calculate only be used in bool");
+            }
+            return VarNode(BOOLL);
+        } else if (this->exptype == EQL || this->exptype == NOTEQL || this->exptype == BIGEQL ||
+                   this->exptype == SMALLEQL || this->exptype == BIG ||
+                   this->exptype == SMALL) {
+            auto tmp1 = this->child->getExprType(nowtable);
+            auto tmp2 = this->child->sibling->getExprType(nowtable);
+            if (tmp1.basetype != tmp2.basetype) {
+                cerror("compera only be used in same type");
+            }
+            return VarNode(tmp1.basetype);
+        } else if (this->exptype == ADD || this->exptype == SUB || this->exptype == MUL || this->exptype == DIV ||
+                   this->exptype == MOD) {
+            auto tmp1 = this->child->getExprType(nowtable);
+            auto tmp2 = this->child->sibling->getExprType(nowtable);
+            if (tmp1.basetype != tmp2.basetype || tmp1.basetype != INT) {
+                cerror("calculate only be used in integer");
+            }
+            return VarNode(INT);
+        } else if (this->exptype == NEG || this->exptype == POS) {
+            auto tmp1 = this->child->getExprType(nowtable);
+            if (tmp1.basetype != INT) {
+                cerror("only integer can be signed");
+            }
+            return VarNode(INT);
+        }
+    } else {
+        cerror("this is not expr");
+    }
 }
 
 bool namespore::findExist() {

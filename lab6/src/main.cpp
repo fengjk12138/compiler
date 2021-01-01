@@ -4,7 +4,7 @@
 extern TreeNode *root;
 extern FILE *yyin;
 extern int yyparse();
-extern namespore* tpyetableRoot;
+extern namespore* typetableRoot;
 using namespace std;
 int main(int argc, char *argv[])
 {
@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     }
     yyparse();
     if(root != NULL) {
-        root->genTable(tpyetableRoot);
+        root->genTable(typetableRoot);
         root->printAST();
     }
     return 0;
