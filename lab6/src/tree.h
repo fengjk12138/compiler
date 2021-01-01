@@ -177,7 +177,7 @@ struct namespore {
     namespore *sibling = nullptr;
     namespore* newChild();
 
-    bool findExit()
+    bool findExist();
 };
 
 #endif

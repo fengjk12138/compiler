@@ -123,3 +123,6 @@ namespore *namespore::newChild() {
 void TreeNode::printAST() {
 
 }
+bool namespore::findExist() {
+    
+}
