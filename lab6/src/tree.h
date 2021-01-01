@@ -111,6 +111,7 @@ enum Basetype {
     STRUCT,
     STRUCT_ARRAY,
     FUNC,
+    BOOL,
     RETVOID,
 };
 enum Spetype {

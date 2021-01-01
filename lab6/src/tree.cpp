@@ -35,7 +35,7 @@ void TreeNode::genTable(namespore *nowtable) {
         nowtable = new namespore();
         auto tmp = this->child->child;
         while (tmp != nullptr) {
-            genTable(nowtable);
+            tmp->genTable(nowtable);
             tmp = tmp->sibling;
         }
     } else if (this->nodeType == NODE_STMT) {
@@ -137,18 +137,56 @@ void TreeNode::genTable(namespore *nowtable) {
             }
         } else if (this->stype == STMT_SKIP) {
         } else if (this->stype == STMT_CONTINUE) {
-//todo
+            if (in_loop == 0) {
+                cerror("break should be used in loop");
+            }
         } else if (this->stype == STMT_WHILE) {
             in_loop++;
+            nowtable = nowtable->newChild();
 
-            
-
-
+            auto exptype = this->child->getExprType(nowtable);
+            if (exptype != BOOL) {
+                cerror("your try to transform a type to bool, now not support");
+            }
+            auto tmp = this->child->sibling;
+            if (tmp->stype == STMT_BLOCK)
+                tmp = tmp->child;
+            while (tmp != nullptr) {
+                tmp->genTable(nowtable);
+                tmp = tmp->sibling;
+            }
+            else{
+                tmp->genTable(nowtable);
+            }
+            nowtable = nowtable->fa;
             in_loop--;
         } else if (this->stype == STMT_FOR) {
             in_loop++;
 
+            if (this->child->nodeType != NODE_EMPTY) {
+                this->child->genTable(nowtable);
+            }
+            if (this->child->sibling->nodeType != NODE_EMPTY) {
+                auto exptype = this->child->sibling->getExprType(nowtable);
+                if (exptype != BOOL) {
+                    cerror("your try to transform a type to bool, now not support");
+                }
+            }
+            if (this->child->sibling->sibling->nodeType != NODE_EMPTY) {
+                this->child->sibling->sibling->genTable(nowtable);
+            }
 
+            auto tmp = this->child->sibling->sibling->sibling;
+            if (tmp->stype == STMT_BLOCK)
+                tmp = tmp->child;
+            while (tmp != nullptr) {
+                tmp->genTable(nowtable);
+                tmp = tmp->sibling;
+            }
+            else{
+                tmp->genTable(nowtable);
+            }
+            nowtable = nowtable->fa;
             in_loop--;
         }
     } else if (this->nodeType == NODE_FUNC) {
@@ -190,7 +228,7 @@ void TreeNode::genTable(namespore *nowtable) {
         //函数体
         auto tmp = this->child->sibling->sibling->sibling->child;
         while (tmp != nullptr) {
-            genTable(nowtable);
+            tmp->genTable(nowtable);
             tmp = tmp->sibling;
         }
         nowtable = nowtable->fa;
@@ -204,7 +242,7 @@ void TreeNode::genTable(namespore *nowtable) {
 
         auto temp = this->child->sibling->child;
         while (temp != nullptr) {
-            genTable(nowtable);
+            temp->genTable(nowtable);
             temp = temp->sibling;
         }
         nowtable = nowtable->fa;
