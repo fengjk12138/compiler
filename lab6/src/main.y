@@ -194,7 +194,8 @@ parameter_list_call_or_empty: parameter_list_call {$$ = $1;}
 ;
 
 FUNCTION_CALL: IDENTIFIER left_br_small parameter_list_call_or_empty right_br_small{
-	$$ = new TreeNode($1->lineno,NODE_FUNC_CALL);
+	$$ = new TreeNode($1->lineno,NODE_EXPR);
+	$$->exptype = FUNC_CALL;
 	$$ -> addChild($1);
 	$$ -> addChild($3);
 }
@@ -443,16 +444,28 @@ Bool_Cal_expr: expr OR expr{
 
 expr
 : IDENTIFIER_val{
-    $$ = $1;
+	$$->nodeType=NODE_EXPR;
+	$$->exptype=IDENTIFIER_VAL;
+    	$$->array_dim = $1->array_dim;
+    	$$->addChild($1->child);
 }
 | INTEGER {
-    $$ = $1;
+    	$$->nodeType=NODE_EXPR;
+	$$->exptype=INTEGER_VAL;
+	$$->int_val=$1->int_val;
 }
 | CHAR {
-    $$ = $1;
+    	$$->nodeType=NODE_EXPR;
+	$$->exptype=CHAR_VAL;
+	$$->ch_val=$1->ch_val;
 }
 | STRING {
-    $$ = $1;
+    	$$->nodeType=NODE_EXPR;
+	$$->exptype=STRING_VAL;
+	$$->str_val=$1->str_val;
+}
+| FUNCTION_CALL{
+    	$$=$1;
 }
 | left_br_small expr right_br_small	{$$ = $2;}
 | Cal_expr	{$$ = $1;}
@@ -508,13 +521,6 @@ ASSIGN: IDENTIFIER_val LOP_ASSIGN expr{
 	TreeNode* node = new TreeNode($1->lineno, NODE_STMT);
 	node->stype = STMT_ASSIGN_ADD_SELF;
 	node->addChild($1);
-	$$ = node;
-}
-| IDENTIFIER_val LOP_ASSIGN FUNCTION_CALL{
-	TreeNode* node = new TreeNode($1->lineno, NODE_STMT);
-	node->stype = STMT_FUNCTION_CALL_GIVEN;
-	node->addChild($1);
-	node->addChild($3);
 	$$ = node;
 }
 ;

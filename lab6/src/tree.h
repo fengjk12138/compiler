@@ -10,7 +10,7 @@ enum NodeType {
     NODE_EXPR,
     NODE_TYPE,
 
-    NODE_FUNC_CALL,
+
     NODE_FUNC,
     NODE_STRUCT,
     NODE_FORMT, //递归列表的一种范式
@@ -56,6 +56,12 @@ enum ExpType {
 
     POINTER,//指针
     ADDRESS,//取地址
+
+    FUNC_CALL,
+    IDENTIFIER_VAL,
+    INTEGER_VAL,
+    CHAR_VAL,
+    STRING_VAL,
 };
 
 enum VarType {
@@ -140,7 +146,7 @@ public:
     TreeNode *sibling = nullptr;
 
     void addChild(TreeNode *);
-
+    VarNode getExprType(namespore* );
     void addSibling(TreeNode *);
     static void cerror(const char *mess);
     void printAST(); // 先输出自己 + 孩子们的id；再依次让每个孩子输出AST。

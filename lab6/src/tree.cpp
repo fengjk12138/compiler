@@ -49,6 +49,17 @@ void TreeNode::genTable(namespore *nowtable) {
                     if (nowtable->var.find(now->child->child->var_name) != nowtable->var.end()) {
                         cerror("Repeated definition");
                     }
+                    if(now->child->ftype==DEFINE_FORMAT_INIT){
+                        auto exprtype=getExprType(nowtable);
+                        if(exprtype.basetype!=)//todo:
+
+                    }else if(now->child->ftype==DEFINE_FORMAT){
+
+                    }else{
+                        cerror("error define");
+                    }
+
+
                     if (now->child->vartype == VAR_TYPE) {
                         if (child1->type == TYPE_INT)
                             nowtable->var[now->child->child->var_name] = VarNode(INT);
@@ -68,11 +79,27 @@ void TreeNode::genTable(namespore *nowtable) {
                         else if (child1->type == TYPE_CHAR_CONST)
                             nowtable->var[now->child->child->var_name] = VarNode(CONST_CHAR_ARRAY);
                         nowtable->var[now->child->child->var_name].arr_dim = now->child->child->sibling->array_dim;
+
+
+
                     } else {
                         cerror("not right type");
                     }
                 }
             }
+        } else if (this->stype == STMT_BREAK) {
+
+        } else if (this->stype == STMT_RET) {
+            if(in_function==0){
+                cerror("return should be used in function");
+            }
+            if(this->child->nodeType!=NODE_EMPTY){
+
+            }
+        } else if (this->stype == STMT_SKIP) {
+
+        } else if (this->stype == STMT_CONTINUE) {
+
         }
     } else if (this->nodeType == NODE_FUNC) {
         in_function = 1;
@@ -155,7 +182,9 @@ namespore *namespore::newChild() {
 void TreeNode::printAST() {
 
 }
+VarNode TreeNode::getExprType(namespore *nowtable){
 
+}
 bool namespore::findExist() {
 
 }
