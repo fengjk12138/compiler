@@ -93,6 +93,15 @@ enum StmtType {
     STMT_IF_ELSE,
     STMT_FOR,
 };
+struct namespore {
+    namespore *fa = nullptr;
+    std::map <std::string, VarNode> var;
+    namespore *child = nullptr;
+    namespore *sibling = nullptr;
+    namespore* newChild();
+
+    bool findExist();
+};
 
 struct TreeNode {
 public:
@@ -170,14 +179,5 @@ struct VarNode {
 };
 
 
-struct namespore {
-    namespore *fa = nullptr;
-    std::map <std::string, VarNode> var;
-    namespore *child = nullptr;
-    namespore *sibling = nullptr;
-    namespore* newChild();
-
-    bool findExist();
-};
 
 #endif
