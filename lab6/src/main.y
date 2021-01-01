@@ -2,7 +2,6 @@
     #include "common.h"
     #define YYSTYPE TreeNode *  
     TreeNode* root;
-    namespore* tableRoot;
     extern int lineno;
     int yylex();
     int yyerror( char const * );
@@ -121,7 +120,7 @@ statement
 	node->addChild($9);
 	$$ = node;
 }
-| For left_br_small ASSIGN_or_empty  SEMICOLON  expr_or_empty SEMICOLON ASSIGN_or_empty right_br_small program_block{
+| For left_br_small ASSIGN_or_empty  SEMICOLON  expr_or_empty SEMICOLON ASSIGN_or_empty right_br_small program_sentense{
  	TreeNode* node = new TreeNode($3->lineno, NODE_STMT);
  	node->stype = STMT_FOR;
  	node->addChild($3);

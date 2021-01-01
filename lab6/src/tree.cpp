@@ -1,5 +1,5 @@
 #include "tree.h"
-
+namespore* tpyetableRoot;
 using namespace std;
 
 void TreeNode::addChild(TreeNode *child) {
@@ -125,13 +125,13 @@ void TreeNode::genTable(namespore *nowtable) {
             //返回值类型检查
             if (this->child->nodeType != NODE_EMPTY) {
                 auto exprtype = this->child->getExprType(nowtable);
-                auto func_var = tableRoot->var[in_function].returnType;
-                if (exprtype != func_var) {
+                auto func_var = tpyetableRoot->var[in_function].returnType;
+                if (exprtype.basetype != func_var) {
                     cerror("return type can not adapt");
                 }
             } else {
-                auto func_var = tableRoot->var[in_function].returnType;
-                if (exprtype != RETVOID) {
+                auto func_var = tpyetableRoot->var[in_function].returnType;
+                if (func_var != RETVOID) {
                     cerror("return type can not adapt");
                 }
             }
@@ -145,17 +145,17 @@ void TreeNode::genTable(namespore *nowtable) {
             nowtable = nowtable->newChild();
 
             auto exptype = this->child->getExprType(nowtable);
-            if (exptype != BOOL) {
+            if (exptype.basetype != BOOLL) {
                 cerror("your try to transform a type to bool, now not support");
             }
             auto tmp = this->child->sibling;
-            if (tmp->stype == STMT_BLOCK)
+            if (tmp->stype == STMT_BLOCK) {
                 tmp = tmp->child;
-            while (tmp != nullptr) {
-                tmp->genTable(nowtable);
-                tmp = tmp->sibling;
-            }
-            else{
+                while (tmp != nullptr) {
+                    tmp->genTable(nowtable);
+                    tmp = tmp->sibling;
+                }
+            } else {
                 tmp->genTable(nowtable);
             }
             nowtable = nowtable->fa;
@@ -168,7 +168,7 @@ void TreeNode::genTable(namespore *nowtable) {
             }
             if (this->child->sibling->nodeType != NODE_EMPTY) {
                 auto exptype = this->child->sibling->getExprType(nowtable);
-                if (exptype != BOOL) {
+                if (exptype.basetype != BOOLL) {
                     cerror("your try to transform a type to bool, now not support");
                 }
             }
@@ -177,13 +177,13 @@ void TreeNode::genTable(namespore *nowtable) {
             }
 
             auto tmp = this->child->sibling->sibling->sibling;
-            if (tmp->stype == STMT_BLOCK)
+            if (tmp->stype == STMT_BLOCK) {
                 tmp = tmp->child;
-            while (tmp != nullptr) {
-                tmp->genTable(nowtable);
-                tmp = tmp->sibling;
-            }
-            else{
+                while (tmp != nullptr) {
+                    tmp->genTable(nowtable);
+                    tmp = tmp->sibling;
+                }
+            } else {
                 tmp->genTable(nowtable);
             }
             nowtable = nowtable->fa;
@@ -247,7 +247,7 @@ void TreeNode::genTable(namespore *nowtable) {
         }
         nowtable = nowtable->fa;
     } else {
-        cerror("your code has something can not parse")
+        cerror("your code has something can not parse");
     }
 
 

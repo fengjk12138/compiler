@@ -111,7 +111,7 @@ enum Basetype {
     STRUCT,
     STRUCT_ARRAY,
     FUNC,
-    BOOL,
+    BOOLL,
     RETVOID,
 };
 enum Spetype {
@@ -184,9 +184,6 @@ public:
 public:
     TreeNode(int lineno, NodeType type);
 };
-
-
-
 
 
 
