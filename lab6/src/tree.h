@@ -109,7 +109,9 @@ enum Basetype {
     INT_ARRAY,
     CHAR_ARRAY,
     STRUCT,
+    STRUCT_ARRAY,
     FUNC,
+    RETVOID,
 };
 enum Spetype {
     STRUCT_VAR,
@@ -123,7 +125,7 @@ struct VarNode {
     Basetype returnType;
     Spetype spetype;
     Basetype basetype;
-
+    string nametype;
     VarNode(Basetype);
 };
 struct namespore {

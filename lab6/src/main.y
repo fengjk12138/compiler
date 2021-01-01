@@ -218,7 +218,7 @@ T: T_INT {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_INT;}
 | T_CONST T_CHAR {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_CHAR_CONST;}
 | T_INT mul {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_INT_POINTER;}
 | T_CHAR mul {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_CHAR_POINTER;}
-| T_STRUCT IDENTIFIER {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_COMPOSE_STRUCT;}
+| T_STRUCT IDENTIFIER {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_COMPOSE_STRUCT;$$->var_name=$2->var_name;}
 | Void {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_VOID;}
 ;
 

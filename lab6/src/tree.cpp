@@ -27,7 +27,8 @@ TreeNode::TreeNode(int lineno, NodeType type) {
     this->nodeType = type;
 }
 
-bool in_function = 0;
+string in_function = "";
+int in_loop = 0;
 
 void TreeNode::genTable(namespore *nowtable) {
     if (this->nodeType == NODE_PROG) {
@@ -43,19 +44,27 @@ void TreeNode::genTable(namespore *nowtable) {
             auto child1 = this->child;
             for (auto now = child2->child; now != nullptr; now = now->sibling) {
                 {
-                    //now define list
-                    //now child define_with_init
+                    //now define_with_init
+                    //now child IDENTIFIER_val
                     //now child child IDENTIFIER
                     if (nowtable->var.find(now->child->child->var_name) != nowtable->var.end()) {
                         cerror("Repeated definition");
                     }
-                    if(now->child->ftype==DEFINE_FORMAT_INIT){
-                        auto exprtype=getExprType(nowtable);
-                        if(exprtype.basetype!=)//todo:
+                    //类型检查，查看是否赋值初始化符合逻辑
+                    if (now->ftype == DEFINE_FORMAT_INIT) {
+                        auto exprtype = now->child->sibling->getExprType(nowtable);
+                        if ((exprtype.basetype == INT &&
+                             (child1->type == TYPE_INT || child1->type == TYPE_INT_CONST)) ||
+                            (exprtype.basetype == CHARR &&
+                             (child1->type == TYPE_CHAR || child1->type == TYPE_CHAR_CONST))) {
+                            //todo
+                        } else cerror("type transform not support");
 
-                    }else if(now->child->ftype==DEFINE_FORMAT){
-
-                    }else{
+                    } else if (now->ftype == DEFINE_FORMAT) {
+                        if (child1->type == TYPE_INT_CONST || TYPE_CHAR_CONST) {
+                            cerror("const var without initialization");
+                        }
+                    } else {
                         cerror("error define");
                     }
 
@@ -69,6 +78,12 @@ void TreeNode::genTable(namespore *nowtable) {
                             nowtable->var[now->child->child->var_name] = VarNode(CONST_INT);
                         else if (child1->type == TYPE_CHAR_CONST)
                             nowtable->var[now->child->child->var_name] = VarNode(CONST_CHAR);
+                        else if (child1->type == TYPE_COMPOSE_STRUCT) {
+                            nowtable->var[now->child->child->var_name] = VarNode(STRUCT);
+                            nowtable->var[now->child->child->var_name].nametype = child1->var_name;
+                        } else {
+                            cerror("type not support");
+                        }
                     } else if (now->child->vartype == ARRAY_TYPE) {
                         if (child1->type == TYPE_INT)
                             nowtable->var[now->child->child->var_name] = VarNode(INT_ARRAY);
@@ -78,32 +93,68 @@ void TreeNode::genTable(namespore *nowtable) {
                             nowtable->var[now->child->child->var_name] = VarNode(CONST_INT_ARRAY);
                         else if (child1->type == TYPE_CHAR_CONST)
                             nowtable->var[now->child->child->var_name] = VarNode(CONST_CHAR_ARRAY);
+                        else if (child1->type == TYPE_COMPOSE_STRUCT) {
+                            nowtable->var[now->child->child->var_name] = VarNode(STRUCT_ARRAY);
+                            nowtable->var[now->child->child->var_name].nametype = child1->var_name;
+                        } else {
+                            cerror("type not support");
+                        }
                         nowtable->var[now->child->child->var_name].arr_dim = now->child->child->sibling->array_dim;
-
-
-
+                        auto arr_dim_list = now->child->child->sibling->child;//arr_dim
+                        //检查声明的数组下标是否是int
+                        while (arr_dim_list != nullptr) {
+                            if (arr_dim_list->exptype != INTEGER_VAL) {
+                                cerror("arr dim should be a integer");
+                            } else {
+                                nowtable->var[now->child->child->var_name].dim_num.push_back(arr_dim_list->int_val);
+                            }
+                        }
                     } else {
                         cerror("not right type");
                     }
                 }
             }
         } else if (this->stype == STMT_BREAK) {
-
+            if (in_loop == 0) {
+                cerror("break should be used in loop");
+            }
         } else if (this->stype == STMT_RET) {
-            if(in_function==0){
+            if (in_function == "") {
                 cerror("return should be used in function");
             }
-            if(this->child->nodeType!=NODE_EMPTY){
-
+            //返回值类型检查
+            if (this->child->nodeType != NODE_EMPTY) {
+                auto exprtype = this->child->getExprType(nowtable);
+                auto func_var = tableRoot->var[in_function].returnType;
+                if (exprtype != func_var) {
+                    cerror("return type can not adapt");
+                }
+            } else {
+                auto func_var = tableRoot->var[in_function].returnType;
+                if (exprtype != RETVOID) {
+                    cerror("return type can not adapt");
+                }
             }
         } else if (this->stype == STMT_SKIP) {
-
         } else if (this->stype == STMT_CONTINUE) {
+//todo
+        } else if (this->stype == STMT_WHILE) {
+            in_loop++;
 
+            
+
+
+            in_loop--;
+        } else if (this->stype == STMT_FOR) {
+            in_loop++;
+
+
+            in_loop--;
         }
     } else if (this->nodeType == NODE_FUNC) {
-        in_function = 1;
+
         string function_name = this->child->sibling->var_name;
+        in_function = function_name;
         if (nowtable->var.find(function_name) != nowtable->var.end()) {
             cerror("Repeated definition");
         }
@@ -112,10 +163,11 @@ void TreeNode::genTable(namespore *nowtable) {
             nowtable->var[function_name].returnType = INT;
         } else if (this->child->type == TYPE_CHAR) {
             nowtable->var[function_name].returnType = CHARR;
+        } else if (this->child->type == TYPE_VOID) {
+            nowtable->var[function_name].returnType = RETVOID;
         } else {
             cerror("function return these type not implement");
         }
-        nowtable->var[function_name].basetype = FUNC;
         nowtable = nowtable->newChild();
         //参数列表
         auto temp = this->child->sibling->sibling->child;
@@ -142,7 +194,7 @@ void TreeNode::genTable(namespore *nowtable) {
             tmp = tmp->sibling;
         }
         nowtable = nowtable->fa;
-        in_function = 0;
+        in_function = "";
     } else if (this->nodeType == NODE_STRUCT) {
         auto struct_name = this->var_name;
         if (nowtable->var.find(struct_name) != nowtable->var.end()) {
@@ -182,9 +234,11 @@ namespore *namespore::newChild() {
 void TreeNode::printAST() {
 
 }
-VarNode TreeNode::getExprType(namespore *nowtable){
+
+VarNode TreeNode::getExprType(namespore *nowtable) {
 
 }
+
 bool namespore::findExist() {
 
 }
