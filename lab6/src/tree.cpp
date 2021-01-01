@@ -31,7 +31,7 @@ bool in_function = 0;
 
 void TreeNode::genTable(namespore *nowtable) {
     if (this->nodeType == NODE_PROG) {
-        nowtable=new namespore();
+        nowtable = new namespore();
         auto tmp = this->child->child;
         while (tmp != nullptr) {
             genTable(nowtable);
@@ -86,13 +86,27 @@ void TreeNode::genTable(namespore *nowtable) {
         } else if (this->child->type == TYPE_CHAR) {
             nowtable->var[function_name].returnType = CHARR;
         } else {
-            cerror("function return in these type not implement");
+            cerror("function return these type not implement");
         }
+        nowtable->var[function_name].basetype = FUNC;
         nowtable = nowtable->newChild();
         //参数列表
-        auto temp = this->child->sibling->sibling;
+        auto temp = this->child->sibling->sibling->child;
 
-
+        while (temp != nullptr) {
+            auto para_name = temp->sibling->var_name;
+            if (nowtable->var.find(para_name) != nowtable->var.end()) {
+                cerror("Repeated definition");
+            }
+            if (temp->type == TYPE_INT) {
+                nowtable->var[para_name] = VarNode(INT);
+            } else if (temp->type == TYPE_CHAR) {
+                nowtable->var[para_name] = VarNode(CHARR);
+            } else {
+                cerror("function parameter these type not implement");
+            }
+            nowtable->param_list.push_back(nowtable->var[para_name]);
+        }
 
         //函数体
         auto tmp = this->child->sibling->sibling->sibling->child;
@@ -103,7 +117,20 @@ void TreeNode::genTable(namespore *nowtable) {
         nowtable = nowtable->fa;
         in_function = 0;
     } else if (this->nodeType == NODE_STRUCT) {
+        auto struct_name = this->var_name;
+        if (nowtable->var.find(struct_name) != nowtable->var.end()) {
+            cerror("Repeated definition");
+        }
+        nowtable = nowtable->newChild();
 
+        auto temp = this->child->sibling->child;
+        while (temp != nullptr) {
+            genTable(nowtable);
+            temp = temp->sibling;
+        }
+        nowtable = nowtable->fa;
+    } else {
+        cerror("your code has something can not parse")
     }
 
 
@@ -133,7 +160,7 @@ bool namespore::findExist() {
 
 }
 
-VarNode::VarNode(Basetype a=INT) {
+VarNode::VarNode(Basetype a = INT) {
     this->basetype = a;
 }
 
