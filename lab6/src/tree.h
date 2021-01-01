@@ -93,6 +93,32 @@ enum StmtType {
     STMT_IF_ELSE,
     STMT_FOR,
 };
+enum Basetype {
+    INT,
+    CHARR,
+    CONST_INT,
+    CONST_CHAR,
+    CONST_INT_ARRAY,
+    CONST_CHAR_ARRAY,
+    INT_ARRAY,
+    CHAR_ARRAY,
+    STRUCT,
+    FUNC,
+};
+enum Spetype {
+    STRUCT_VAR,
+    FUNC_VAR,
+};
+
+struct VarNode {
+    int pos;
+    int arr_dim = 0;
+    Basetype returnType;
+    Spetype spetype;
+    Basetype basetype;
+
+    VarNode(Basetype);
+};
 struct namespore {
     namespore *fa = nullptr;
     std::map <std::string, VarNode> var;
@@ -114,7 +140,7 @@ public:
     void addChild(TreeNode *);
 
     void addSibling(TreeNode *);
-
+    static void cerror(const char *mess);
     void printAST(); // 先输出自己 + 孩子们的id；再依次让每个孩子输出AST。
     void genTable(namespore *);
 
@@ -149,34 +175,7 @@ public:
 };
 
 
-enum Basetype {
-    INT,
-    CHAR,
-    CONST_INT,
-    CONST_CHAR,
-    CONST_INT_ARRAY,
-    CONST_CHAR_ARRAY,
-    INT_ARRAY,
-    CHAR_ARRAY,
-    STRUCT,
-    FUNC,
-};
-enum Spetype {
-    STRUCT_VAR,
-    FUNC_VAR,
-};
 
-struct VarNode {
-    int pos;
-    int arr_dim = 0;
-    Basetype returnType;
-    Spetype spetype;
-    Basetype basetype;
-
-    VarNode(Basetype a) {
-        this->basetype = a;
-    }
-};
 
 
 

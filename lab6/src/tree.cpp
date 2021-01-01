@@ -31,7 +31,12 @@ bool in_function = 0;
 
 void TreeNode::genTable(namespore *nowtable) {
     if (this->nodeType == NODE_PROG) {
-        this->child->genTable(nowtable);
+        nowtable=new namespore();
+        auto tmp = this->child->child;
+        while (tmp != nullptr) {
+            genTable(nowtable);
+            tmp = tmp->sibling;
+        }
     } else if (this->nodeType == NODE_STMT) {
         if (this->stype == STMT_DECL) {
             auto child2 = this->child->sibling;//参数列表
@@ -42,29 +47,29 @@ void TreeNode::genTable(namespore *nowtable) {
                     //now child define_with_init
                     //now child child IDENTIFIER
                     if (nowtable->var.find(now->child->child->var_name) != nowtable->var.end()) {
-                        yyerror("Repeated definition");
+                        cerror("Repeated definition");
                     }
                     if (now->child->vartype == VAR_TYPE) {
                         if (child1->type == TYPE_INT)
-                            nowtable->var[now->child] = VarNode(INT);
+                            nowtable->var[now->child->child->var_name] = VarNode(INT);
                         else if (child1->type == TYPE_CHAR)
-                            nowtable->var[now->child] = VarNode(CHAR);
+                            nowtable->var[now->child->child->var_name] = VarNode(CHARR);
                         else if (child1->type == TYPE_INT_CONST)
-                            nowtable->var[now->child] = VarNode(CONST_INT);
+                            nowtable->var[now->child->child->var_name] = VarNode(CONST_INT);
                         else if (child1->type == TYPE_CHAR_CONST)
-                            nowtable->var[now->child] = VarNode(CONST_CHAR);
+                            nowtable->var[now->child->child->var_name] = VarNode(CONST_CHAR);
                     } else if (now->child->vartype == ARRAY_TYPE) {
                         if (child1->type == TYPE_INT)
-                            nowtable->var[now->child] = VarNode(INT_ARRAY);
+                            nowtable->var[now->child->child->var_name] = VarNode(INT_ARRAY);
                         else if (child1->type == TYPE_CHAR)
-                            nowtable->var[now->child] = VarNode(CHAR_ARRAY);
+                            nowtable->var[now->child->child->var_name] = VarNode(CHAR_ARRAY);
                         else if (child1->type == TYPE_INT_CONST)
-                            nowtable->var[now->child] = VarNode(CONST_INT_ARRAY);
+                            nowtable->var[now->child->child->var_name] = VarNode(CONST_INT_ARRAY);
                         else if (child1->type == TYPE_CHAR_CONST)
-                            nowtable->var[now->child] = VarNode(CONST_CHAR_ARRAY);
-                        nowtable->var[now->child].arr_dim = now->child->child->sibling->array_dim;
+                            nowtable->var[now->child->child->var_name] = VarNode(CONST_CHAR_ARRAY);
+                        nowtable->var[now->child->child->var_name].arr_dim = now->child->child->sibling->array_dim;
                     } else {
-                        yyerror("not right type");
+                        cerror("not right type");
                     }
                 }
             }
@@ -73,19 +78,19 @@ void TreeNode::genTable(namespore *nowtable) {
         in_function = 1;
         string function_name = this->child->sibling->var_name;
         if (nowtable->var.find(function_name) != nowtable->var.end()) {
-            yyerror("Repeated definition");
+            cerror("Repeated definition");
         }
         nowtable->var[function_name] = VarNode(FUNC);
-        if(this->child->type==TYPE_INT){
-            nowtable->var[function_name].returnType=INT;
-        }else if(this->child->type==TYPE_CHAR){
-            nowtable->var[function_name].returnType=CHAR;
-        }else{
-            yyerror("function return in these type not implement");
+        if (this->child->type == TYPE_INT) {
+            nowtable->var[function_name].returnType = INT;
+        } else if (this->child->type == TYPE_CHAR) {
+            nowtable->var[function_name].returnType = CHARR;
+        } else {
+            cerror("function return in these type not implement");
         }
         nowtable = nowtable->newChild();
         //参数列表
-        auto temp=this->child->sibling->sibling;
+        auto temp = this->child->sibling->sibling;
 
 
 
@@ -123,6 +128,16 @@ namespore *namespore::newChild() {
 void TreeNode::printAST() {
 
 }
+
 bool namespore::findExist() {
-    
+
+}
+
+VarNode::VarNode(Basetype a=INT) {
+    this->basetype = a;
+}
+
+void TreeNode::cerror(const char *mess) {
+    cout << mess << endl;
+    exit(1);
 }
