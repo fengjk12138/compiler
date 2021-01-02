@@ -5,62 +5,17 @@
 
 using namespace std;
 
-enum ValueType {
-    VALUE_BOOL,
-    VALUE_INT,
-    VALUE_CHAR,
-    VALUE_STRING,
-    VALUE_VOID,
-
-    VALUE_INT_CONST,
-    VALUE_CHAR_CONST,
-
-    VALIE_INT_POINTER,
-    VALIE_CHAR_POINTER,
-
-    COMPOSE_STRUCT,
-    COMPOSE_UNION,
-    COMPOSE_FUNCTION
+enum Type {
+    TYPE_INT,
+    TYPE_CHAR,
+    TYPE_BOOL,
+    TYPE_STRING,
+    TYPE_VOID,
+    TYPE_INT_CONST,
+    TYPE_CHAR_CONST,
+    TYPE_INT_POINTER,
+    TYPE_CHAR_POINTER,
+    TYPE_COMPOSE_STRUCT,
 };
-
-class Type {
-public:
-    ValueType type;
-
-    Type(ValueType valueType);
-
-public:
-    /* 如果你要设计复杂类型系统的话，可以修改这一部分 */
-    ValueType *childType; // for union or struct
-    ValueType *paramType, retType; // for function
-
-    void addChild(Type *t);
-
-    void addSibling(Type *T);
-
-    void addParam(Type *t);
-
-    void addRet(Type *t);
-
-public:
-    ValueType *sibling;
-public:
-    string getTypeInfo();
-};
-
-// 设置几个常量Type，可以节省空间开销
-static Type *TYPE_INT = new Type(VALUE_INT);
-static Type *TYPE_CHAR = new Type(VALUE_CHAR);
-static Type *TYPE_BOOL = new Type(VALUE_BOOL);
-static Type *TYPE_STRING = new Type(VALUE_STRING);
-static Type *TYPE_VOID = new Type(VALUE_VOID);
-static Type *TYPE_INT_CONST=new Type(VALUE_INT_CONST);
-static Type *TYPE_CHAR_CONST=new Type(VALUE_CHAR_CONST);
-static Type *TYPE_INT_POINTER=new Type(VALIE_INT_POINTER);
-static Type *TYPE_CHAR_POINTER=new Type(VALIE_CHAR_POINTER);
-static Type *TYPE_COMPOSE_STRUCT=new Type(COMPOSE_STRUCT);
-
-
-int getSize(Type *type);
 
 #endif

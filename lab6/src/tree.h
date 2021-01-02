@@ -180,7 +180,7 @@ public:
     string str_val;
 
     //变量使用
-    Type *type;  // int void char变量、类型、表达式结点，有类型。
+    Type type;  // int void char变量、类型、表达式结点，有类型。
     int array_dim = 0;
     VarType vartype; //变量(常量)的类型
     string var_name;

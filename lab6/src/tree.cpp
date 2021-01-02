@@ -33,7 +33,7 @@ int in_loop = 0;
 
 void TreeNode::genTable(namespore *nowtable) {
     if (this->nodeType == NODE_PROG) {
-        nowtable = new namespore();
+        nowtable = typetableRoot = new namespore();
         auto tmp = this->child->child;
         while (tmp != nullptr) {
             tmp->genTable(nowtable);
@@ -62,7 +62,7 @@ void TreeNode::genTable(namespore *nowtable) {
                         } else cerror("type transform not support");
 
                     } else if (now->ftype == DEFINE_FORMAT) {
-                        if (child1->type == TYPE_INT_CONST || TYPE_CHAR_CONST) {
+                        if (child1->type == TYPE_INT_CONST || child1->type == TYPE_CHAR_CONST) {
                             cerror("const var without initialization");
                         }
                     } else {
@@ -131,6 +131,7 @@ void TreeNode::genTable(namespore *nowtable) {
             }
             //返回值类型检查
             if (this->child->nodeType != NODE_EMPTY) {
+
                 auto exprtype = this->child->getExprType(nowtable);
                 auto func_var = typetableRoot->var[in_function].returnType;
                 if (exprtype.basetype != func_var) {
@@ -279,7 +280,6 @@ void TreeNode::genTable(namespore *nowtable) {
 
         }
     } else if (this->nodeType == NODE_FUNC) {
-
         string function_name = this->child->sibling->var_name;
         in_function = function_name;
         if (nowtable->var.find(function_name) != nowtable->var.end()) {
@@ -314,12 +314,14 @@ void TreeNode::genTable(namespore *nowtable) {
             nowtable->param_list.push_back(nowtable->var[para_name]);
         }
         nowtable->fa->structvar[function_name] = nowtable;
+
         //函数体
         auto tmp = this->child->sibling->sibling->sibling->child;
         while (tmp != nullptr) {
             tmp->genTable(nowtable);
             tmp = tmp->sibling;
         }
+
         nowtable = nowtable->fa;
         in_function = "";
     } else if (this->nodeType == NODE_STRUCT) {
@@ -490,9 +492,9 @@ VarNode TreeNode::getExprType(namespore *nowtable) {
         return VarNode(tmp1.basetype);
     } else if (this->nodeType == NODE_EXPR) {
 
-        if (this->exptype == INTEGER_VAL)
+        if (this->exptype == INTEGER_VAL) {
             return VarNode(INT);
-        else if (this->exptype == CHAR_VAL)
+        } else if (this->exptype == CHAR_VAL)
             return VarNode(CHARR);
         else if (this->exptype == STRING_VAL) {
             cerror("not support string in calculate");
