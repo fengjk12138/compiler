@@ -301,7 +301,7 @@ VarNode TreeNode::getIdValType(namespore *nowtable) {
             tempret.returnType = CONST_INT;
             return tempret;
         } else if (temptable->var[id_name].basetype == CONST_CHAR) {
-            auto tempret = VarNode(CHAR);
+            auto tempret = VarNode(CHARR);
             tempret.returnType = CONST_CHAR;
             return tempret;
         } else {
@@ -327,7 +327,7 @@ VarNode TreeNode::getIdValType(namespore *nowtable) {
             tempret.returnType = CONST_INT;
             return tempret;
         } else if (temptable->var[id_name].basetype == CONST_CHAR_ARRAY) {
-            auto tempret = VarNode(CHAR);
+            auto tempret = VarNode(CHARR);
             tempret.returnType = CONST_CHAR;
             return tempret;
         } else {
@@ -393,7 +393,7 @@ VarNode TreeNode::getExprType(namespore *nowtable) {
             return VarNode(this->getIdValType(nowtable));
         } else if (this->exptype == FUNC_CALL) {
             if (typetableRoot->var.find(this->child->var_name) != typetableRoot->var.end()) {
-                return VarNode(typetableRoot->var[this->child->var_name].returntype);
+                return VarNode(typetableRoot->var[this->child->var_name].returnType);
             } else {
                 cerror("no such function");
             }
@@ -439,11 +439,6 @@ VarNode TreeNode::getExprType(namespore *nowtable) {
         cerror("this is not expr");
     }
 }
-
-bool namespore::findExist() {
-
-}
-
 VarNode::VarNode(Basetype a = INT) {
     this->basetype = a;
 }

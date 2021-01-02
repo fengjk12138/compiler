@@ -142,7 +142,6 @@ struct namespore {
 
     namespore *newChild();
 
-    bool findExist();
 };
 
 struct TreeNode {
