@@ -95,6 +95,12 @@ void TreeNode::genTable(namespore *nowtable) {
                         else if (child1->type == TYPE_CHAR_CONST)
                             nowtable->var[now->child->child->var_name] = VarNode(CONST_CHAR_ARRAY);
                         else if (child1->type == TYPE_COMPOSE_STRUCT) {
+                            if (typetableRoot->var.find(child1->var_name) == typetableRoot->var.end()) {
+                                cerror("this struct not define");
+                            }
+                            if (typetableRoot->var[child1->var_name].basetype != STRUCT_DEF) {
+                                cerror("this IDENTIFIER is not a struct");
+                            }
                             nowtable->var[now->child->child->var_name] = VarNode(STRUCT_ARRAY);
                             nowtable->var[now->child->child->var_name].nametype = child1->var_name;
                         } else {
@@ -239,6 +245,7 @@ void TreeNode::genTable(namespore *nowtable) {
         if (nowtable->var.find(struct_name) != nowtable->var.end()) {
             cerror("Repeated definition");
         }
+        nowtable->var[struct_name] = VarNode(STRUCT_DEF);
         nowtable = nowtable->newChild();
 
         auto temp = this->child->sibling->child;
@@ -277,11 +284,100 @@ void TreeNode::printAST() {
 
 VarNode TreeNode::getIdValType(namespore *nowtable) {
     //todo
+    if (this->vartype == VAR_TYPE) {
+        auto id_name = this->child->var_name;
+        auto temptable = nowtable;
+        while (temptable != nullptr && temptable->var.find(id_name) == temptable->var.end()) {
+            temptable = temptable->fa;
+        }
+        if (temptable == nullptr || temptable->var[id_name].arr_dim != this->child->sibling->array_dim) {
+            cerror("can not find this IDENTIFIER");
+        }
+
+        if (temptable->var[id_name].basetype == INT || temptable->var[id_name].basetype == CHARR) {
+            return VarNode(temptable->var[id_name].basetype);
+        } else if (temptable->var[id_name].basetype == CONST_INT) {
+            auto tempret = VarNode(INT);
+            tempret.returnType = CONST_INT;
+            return tempret;
+        } else if (temptable->var[id_name].basetype == CONST_CHAR) {
+            auto tempret = VarNode(CHAR);
+            tempret.returnType = CONST_CHAR;
+            return tempret;
+        } else {
+            cerror("this is not a right IDENTIFIER");
+        }
+    } else if (this->vartype == ARRAY_TYPE) {
+        auto id_name = this->child->var_name;
+        auto temptable = nowtable;
+        while (temptable != nullptr && temptable->var.find(id_name) == temptable->var.end()) {
+            temptable = temptable->fa;
+        }
+        if (temptable == nullptr || temptable->var[id_name].arr_dim != this->child->sibling->array_dim) {
+            cerror("can not find this IDENTIFIER");
+        }
+
+        if (temptable->var[id_name].basetype == INT_ARRAY) {
+            return VarNode(INT);
+
+        } else if (temptable->var[id_name].basetype == CHAR_ARRAY) {
+            return VarNode(CHARR);
+        } else if (temptable->var[id_name].basetype == CONST_INT_ARRAY) {
+            auto tempret = VarNode(INT);
+            tempret.returnType = CONST_INT;
+            return tempret;
+        } else if (temptable->var[id_name].basetype == CONST_CHAR_ARRAY) {
+            auto tempret = VarNode(CHAR);
+            tempret.returnType = CONST_CHAR;
+            return tempret;
+        } else {
+            cerror("this is not a right IDENTIFIER");
+        }
+    } else if (this->vartype == STRUCT_TYPE) {
+        if ((this->child->vartype != VAR_TYPE && this->child->vartype != ARRAY_TYPE) ||
+            (this->child->sibling->vartype != VAR_TYPE && this->child->sibling->vartype != ARRAY_TYPE)) {
+            cerror("struct nest not support");
+        }
+
+
+        auto id_name = this->child->var_name;
+        auto temptable = nowtable;
+        while (temptable != nullptr && temptable->var.find(id_name) == temptable->var.end()) {
+            temptable = temptable->fa;
+        }
+        if (temptable == nullptr ||
+            (temptable->var[id_name].basetype != STRUCT && temptable->var[id_name].basetype != STRUCT_ARRAY) ||
+            temptable->var[id_name].arr_dim != this->child->array_dim) {
+            cerror("can not find this IDENTIFIER");
+        }
+        //todo:struct check
+//        auto id_name_p2 = this->child->sibling->var_name;
+//        if (temptable->var[id_name_p2].basetype == INT || temptable->var[id_name].basetype == CHARR) {
+//            return VarNode(temptable->var[id_name].basetype);
+//        } else if (temptable->var[id_name].basetype == CONST_INT) {
+//            auto tempret = VarNode(INT);
+//            tempret.returnType = CONST_INT;
+//            return tempret;
+//        } else if (temptable->var[id_name].basetype == CONST_CHAR) {
+//            auto tempret = VarNode(CHAR);
+//            tempret.returnType = CONST_CHAR;
+//            return tempret;
+//        } else {
+//            cerror("this is not a right IDENTIFIER");
+//        }
+
+
+    } else {
+        cerror("not support this type");
+    }
 }
 
 VarNode TreeNode::getExprType(namespore *nowtable) {
     if (this->nodeType == NODE_STMT) {
         auto tmp1 = this->child->getIdValType(nowtable);
+        if (tmp1.returnType == CONST_INT || tmp1.returnType == CONST_CHAR) {
+            cerror("const var can not assgin");
+        }
         if (this->child->sibling != nullptr) {
             auto tmp2 = this->child->sibling->getExprType(nowtable);
             if (tmp2.basetype != tmp1.basetype) {
@@ -305,6 +401,7 @@ VarNode TreeNode::getExprType(namespore *nowtable) {
             } else {
                 cerror("no such function");
             }
+            //todo:函数参数列表检查
         } else if (this->exptype == OR_BOOL || this->exptype == AND_BOOL) {
             auto tmp1 = this->child->getExprType(nowtable);
             auto tmp2 = this->child->sibling->getExprType(nowtable);

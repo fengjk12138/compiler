@@ -254,6 +254,7 @@ Array_Dim: left_br_mid expr right_br_mid Array_Dim{
 IDENTIFIER_val: IDENTIFIER Array_Dim{
 	$$ =new TreeNode($1->lineno, NODE_VAR);
 	$$->addChild($1);
+	$$->var_name=$1->var_name;
 	$$->vartype=VAR_TYPE;
 	if($2->nodeType!=NODE_EMPTY){
 		$$->addChild($2);

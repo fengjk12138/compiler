@@ -113,6 +113,7 @@ enum Basetype {
     FUNC,
     BOOLL,
     RETVOID,
+    STRUCT_DEF,
 };
 enum Spetype {
     STRUCT_VAR,
