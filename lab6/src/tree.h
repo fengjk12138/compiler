@@ -128,7 +128,8 @@ struct VarNode {
     Spetype spetype;
     Basetype basetype;
     string nametype;
-
+    int varsize=0;
+    int offset_struct=0;
     VarNode(Basetype);
 };
 

@@ -70,6 +70,7 @@ void TreeNode::genTable(namespore *nowtable) {
                     }
 
                     if (now->child->vartype == VAR_TYPE) {
+                        nowtable->var[now->child->child->var_name].varsize = 4;
                         if (child1->type == TYPE_INT)
                             nowtable->var[now->child->child->var_name] = VarNode(INT);
                         else if (child1->type == TYPE_CHAR)
@@ -79,12 +80,21 @@ void TreeNode::genTable(namespore *nowtable) {
                         else if (child1->type == TYPE_CHAR_CONST)
                             nowtable->var[now->child->child->var_name] = VarNode(CONST_CHAR);
                         else if (child1->type == TYPE_COMPOSE_STRUCT) {
+                            if (typetableRoot->var.find(child1->var_name) == typetableRoot->var.end()) {
+                                cerror("this struct not define");
+                            }
+                            if (typetableRoot->var[child1->var_name].basetype != STRUCT_DEF) {
+                                cerror("this IDENTIFIER is not a struct");
+                            }
                             nowtable->var[now->child->child->var_name] = VarNode(STRUCT);
                             nowtable->var[now->child->child->var_name].nametype = child1->var_name;
+                            nowtable->var[now->child->child->var_name].varsize = typetableRoot->var[child1->var_name].varsize;
                         } else {
                             cerror("type not support");
                         }
                     } else if (now->child->vartype == ARRAY_TYPE) {
+                        int basesize = 4;
+
                         if (child1->type == TYPE_INT)
                             nowtable->var[now->child->child->var_name] = VarNode(INT_ARRAY);
                         else if (child1->type == TYPE_CHAR)
@@ -100,22 +110,28 @@ void TreeNode::genTable(namespore *nowtable) {
                             if (typetableRoot->var[child1->var_name].basetype != STRUCT_DEF) {
                                 cerror("this IDENTIFIER is not a struct");
                             }
+                            basesize = typetableRoot->var[child1->var_name].varsize;
                             nowtable->var[now->child->child->var_name] = VarNode(STRUCT_ARRAY);
                             nowtable->var[now->child->child->var_name].nametype = child1->var_name;
+
                         } else {
                             cerror("type not support");
                         }
+
                         nowtable->var[now->child->child->var_name].arr_dim = now->child->child->sibling->array_dim;
                         auto arr_dim_list = now->child->child->sibling->child;//arr_dim
                         //检查声明的数组下标是否是int
+                        int base_array = 1;
                         while (arr_dim_list != nullptr) {
                             if (arr_dim_list->exptype != INTEGER_VAL) {
                                 cerror("arr dim should be a integer");
                             } else {
+                                base_array *= arr_dim_list->int_val;
                                 nowtable->var[now->child->child->var_name].dim_num.push_back(arr_dim_list->int_val);
                             }
                             arr_dim_list = arr_dim_list->sibling;
                         }
+                        nowtable->var[now->child->child->var_name].varsize = base_array * basesize;
                     } else {
                         cerror("not right type");
                     }
@@ -314,8 +330,8 @@ void TreeNode::genTable(namespore *nowtable) {
                 cerror("function parameter these type not implement");
             }
             nowtable->param_list.push_back(nowtable->var[para_name]);
-            temp=temp->sibling;
-            temp=temp->sibling;
+            temp = temp->sibling;
+            temp = temp->sibling;
         }
         nowtable->fa->structvar[function_name] = nowtable;
 
@@ -342,7 +358,12 @@ void TreeNode::genTable(namespore *nowtable) {
             temp->genTable(nowtable);
             temp = temp->sibling;
         }
+        for (auto &x:nowtable->var) {
+            x.second.offset_struct = nowtable->fa->var[struct_name].varsize;
+            nowtable->fa->var[struct_name].varsize += x.second.varsize;
+        }
         nowtable = nowtable->fa;
+
     } else {
         cerror("your code has something can not parse");
     }
@@ -463,9 +484,6 @@ VarNode TreeNode::getIdValType(namespore *nowtable) {
             cerror("struct member is not right");
         }
         //todo:维度下标检查
-
-
-
 
 
         if (tempspore->var[this->child->sibling->var_name].basetype == INT ||
