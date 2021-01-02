@@ -195,6 +195,88 @@ void TreeNode::genTable(namespore *nowtable) {
             }
             nowtable = nowtable->fa;
             in_loop--;
+        } else if (this->stype == STMT_ASSIGN || this->stype == STMT_ASSIGN_ADD || this->stype == STMT_ASSIGN_MUL ||
+                   this->stype == STMT_ASSIGN_SUB || this->stype == STMT_ASSIGN_DIV || this->stype == STMT_ASSIGN_MOD ||
+                   this->stype == STMT_ASSIGN_ADD_SELF) {
+            this->getExprType(nowtable);
+        } else if (this->stype == STMT_FUNCTION_CALL) {
+            if (typetableRoot->var.find(this->child->var_name) != typetableRoot->var.end()) {
+                auto funcname = this->child->var_name;
+                if (typetableRoot->var[funcname].basetype != FUNC) {
+                    cerror("this is not a function");
+                }
+                if (typetableRoot->var[funcname].returnType != RETVOID) {
+                    cerror("return not use");
+                }
+                auto temp = this->child->sibling;
+                if (temp->array_dim != typetableRoot->structvar[funcname]->param_list.size()) {
+                    cerror("param num not right");
+                }
+                temp = temp->child;
+                int x = -1;
+                while (temp != nullptr) {
+                    if (temp->getExprType(nowtable).basetype !=
+                        typetableRoot->structvar[funcname]->param_list[++x].basetype) {
+                        cerror("function param type error");
+                    }
+                    temp = temp->sibling;
+                }
+            } else {
+                cerror("no such function");
+            }
+        } else if (this->stype == STMT_IF_ELSE || this->stype == STMT_IF) {
+            if (this->child->getExprType(nowtable).basetype != BOOLL) {
+                cerror("try to transform other type to bool");
+            }
+            //检查then 语句
+            nowtable = nowtable->newChild();
+
+            auto tmp = this->child->sibling;
+            if (tmp->stype == STMT_BLOCK) {
+                tmp = tmp->child;
+                while (tmp != nullptr) {
+                    tmp->genTable(nowtable);
+                    tmp = tmp->sibling;
+                }
+            } else {
+                tmp->genTable(nowtable);
+            }
+
+            nowtable = nowtable->fa;
+            if (this->stype == STMT_IF_ELSE) {
+                //检查else语句
+                nowtable = nowtable->newChild();
+                auto tmp = this->child->sibling->sibling;
+                if (tmp->stype == STMT_BLOCK) {
+                    tmp = tmp->child;
+                    while (tmp != nullptr) {
+                        tmp->genTable(nowtable);
+                        tmp = tmp->sibling;
+                    }
+                } else {
+                    tmp->genTable(nowtable);
+                }
+                nowtable = nowtable->fa;
+            }
+        } else if (this->stype == STMT_SCANF) {
+            auto temp = this->child->sibling;
+            if (temp != nullptr) {
+                temp = temp->child;
+                while (temp != nullptr) {
+                    temp->getIdValType(nowtable);
+                    temp = temp->sibling;
+                }
+            }
+        } else if (this->stype == STMT_PRINT) {
+            auto temp = this->child->sibling;
+            if (temp != nullptr) {
+                temp = temp->child;
+                while (temp != nullptr) {
+                    temp->getExprType(nowtable);
+                    temp = temp->sibling;
+                }
+            }
+
         }
     } else if (this->nodeType == NODE_FUNC) {
 
@@ -279,6 +361,7 @@ namespore *namespore::newChild() {
 
 void TreeNode::printAST() {
 
+
 }
 
 
@@ -315,6 +398,14 @@ VarNode TreeNode::getIdValType(namespore *nowtable) {
         }
         if (temptable == nullptr || temptable->var[id_name].arr_dim != this->child->sibling->array_dim) {
             cerror("can not find this IDENTIFIER");
+        }
+
+        auto dimtemp = this->child->sibling->child;
+        while (dimtemp != nullptr) {
+            if (dimtemp->getExprType(nowtable).basetype != INT) {
+                cerror("array dim should be a integer");
+            }
+            dimtemp = dimtemp->sibling;
         }
 
         if (temptable->var[id_name].basetype == INT_ARRAY) {
@@ -363,6 +454,21 @@ VarNode TreeNode::getIdValType(namespore *nowtable) {
         } else {
             cerror("struct member is not right");
         }
+        //todo:维度下标检查
+
+
+
+
+
+        if (tempspore->var[this->child->sibling->var_name].basetype == INT ||
+            tempspore->var[this->child->sibling->var_name].basetype == INT_ARRAY)
+            return VarNode(INT);
+        else if (tempspore->var[this->child->sibling->var_name].basetype == CHARR ||
+                 tempspore->var[this->child->sibling->var_name].basetype == CHAR_ARRAY)
+            return VarNode(CHARR);
+        else {
+            cerror("not support");
+        }
     } else {
         cerror("not support this type");
     }
@@ -410,6 +516,7 @@ VarNode TreeNode::getExprType(namespore *nowtable) {
                         typetableRoot->structvar[funcname]->param_list[++x].basetype) {
                         cerror("function param type error");
                     }
+                    temp = temp->sibling;
                 }
                 return VarNode(typetableRoot->var[this->child->var_name].returnType);
             } else {

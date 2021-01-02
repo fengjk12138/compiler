@@ -527,12 +527,12 @@ ASSIGN: IDENTIFIER_val LOP_ASSIGN expr{
 }
 ;
 
-Scanf_format:Interval expr Scanf_format{
+Scanf_format:Interval Get_Addr IDENTIFIER_val Scanf_format{
 	TreeNode* node = new TreeNode($2->lineno, NODE_FORMT);
    	node->ftype = SCANF_FORMAT;
-   	node->addChild($2);
+   	node->addChild($3);
    	if($3!=nullptr){
-    		node->addSibling($3);
+    		node->addChild($4->child);
     	}
     	$$ = node;
 }
@@ -543,7 +543,7 @@ Print_format : Interval expr Print_format{
 	node->ftype = PRINT_FORMAT;
 	node->addChild($2);
 	if($3!=nullptr){
-		node->addSibling($3);
+		node->addChild($2->child);
 	}
 	$$ = node;
 }
