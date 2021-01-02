@@ -231,7 +231,7 @@ void TreeNode::genTable(namespore *nowtable) {
             }
             nowtable->param_list.push_back(nowtable->var[para_name]);
         }
-
+        nowtable->fa->structvar[function_name] = nowtable;
         //函数体
         auto tmp = this->child->sibling->sibling->sibling->child;
         while (tmp != nullptr) {
@@ -369,7 +369,8 @@ VarNode TreeNode::getIdValType(namespore *nowtable) {
 }
 
 VarNode TreeNode::getExprType(namespore *nowtable) {
-    if (this->nodeType == NODE_STMT) {
+    if (this->
+            nodeType == NODE_STMT) {
         auto tmp1 = this->child->getIdValType(nowtable);
         if (tmp1.returnType == CONST_INT || tmp1.returnType == CONST_CHAR) {
             cerror("const var can not assgin");
@@ -393,11 +394,27 @@ VarNode TreeNode::getExprType(namespore *nowtable) {
             return VarNode(this->getIdValType(nowtable));
         } else if (this->exptype == FUNC_CALL) {
             if (typetableRoot->var.find(this->child->var_name) != typetableRoot->var.end()) {
+                auto funcname = this->child->var_name;
+                if (typetableRoot->var[funcname].basetype != FUNC) {
+                    cerror("this is not a function");
+                }
+
+                auto temp = this->child->sibling;
+                if (temp->array_dim != typetableRoot->structvar[funcname]->param_list.size()) {
+                    cerror("param num not right");
+                }
+                temp = temp->child;
+                int x = -1;
+                while (temp != nullptr) {
+                    if (temp->getExprType(nowtable).basetype !=
+                        typetableRoot->structvar[funcname]->param_list[++x].basetype) {
+                        cerror("function param type error");
+                    }
+                }
                 return VarNode(typetableRoot->var[this->child->var_name].returnType);
             } else {
                 cerror("no such function");
             }
-            //todo:函数参数列表检查
         } else if (this->exptype == OR_BOOL || this->exptype == AND_BOOL) {
             auto tmp1 = this->child->getExprType(nowtable);
             auto tmp2 = this->child->sibling->getExprType(nowtable);
@@ -439,6 +456,7 @@ VarNode TreeNode::getExprType(namespore *nowtable) {
         cerror("this is not expr");
     }
 }
+
 VarNode::VarNode(Basetype a = INT) {
     this->basetype = a;
 }

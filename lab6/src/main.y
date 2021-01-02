@@ -176,20 +176,22 @@ FUNCTION: T IDENTIFIER left_br_small parameter_list_or_empty right_br_small prog
 }
 ;
 
-parameter_list_call: IDENTIFIER_val {
+parameter_list_call: expr {
 	$$ =new TreeNode($1->lineno, NODE_FORMT);
 	$$->ftype=PARAM_LIST_CALL;
 	$$ -> addChild($1);
+	$$->array_dim=1;
 }
-| IDENTIFIER_val Interval parameter_list_call{
+| expr Interval parameter_list_call{
 	$$ = new TreeNode($1->lineno, NODE_FORMT);
 	$$->ftype=PARAM_LIST_CALL;
 	$$ -> addChild($1);
         $$ -> addChild($3->child);
+        $$->array_dim=$3->array_dim+1;
 }
 ;
 parameter_list_call_or_empty: parameter_list_call {$$ = $1;}
-|  {$$=new TreeNode(lineno, NODE_EMPTY);}
+|  {$$=new TreeNode(lineno, NODE_EMPTY);$$->array_dim=0;}
 ;
 
 FUNCTION_CALL: IDENTIFIER left_br_small parameter_list_call_or_empty right_br_small{
