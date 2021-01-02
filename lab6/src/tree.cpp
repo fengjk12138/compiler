@@ -69,7 +69,6 @@ void TreeNode::genTable(namespore *nowtable) {
                         cerror("error define");
                     }
 
-
                     if (now->child->vartype == VAR_TYPE) {
                         if (child1->type == TYPE_INT)
                             nowtable->var[now->child->child->var_name] = VarNode(INT);
@@ -115,6 +114,7 @@ void TreeNode::genTable(namespore *nowtable) {
                             } else {
                                 nowtable->var[now->child->child->var_name].dim_num.push_back(arr_dim_list->int_val);
                             }
+                            arr_dim_list = arr_dim_list->sibling;
                         }
                     } else {
                         cerror("not right type");
@@ -170,6 +170,7 @@ void TreeNode::genTable(namespore *nowtable) {
             in_loop--;
         } else if (this->stype == STMT_FOR) {
             in_loop++;
+            nowtable = nowtable->newChild();
 
             if (this->child->nodeType != NODE_EMPTY) {
                 this->child->genTable(nowtable);
@@ -269,6 +270,7 @@ void TreeNode::genTable(namespore *nowtable) {
                 }
             }
         } else if (this->stype == STMT_PRINT) {
+
             auto temp = this->child->sibling;
             if (temp != nullptr) {
                 temp = temp->child;
@@ -277,7 +279,6 @@ void TreeNode::genTable(namespore *nowtable) {
                     temp = temp->sibling;
                 }
             }
-
         }
     } else if (this->nodeType == NODE_FUNC) {
         string function_name = this->child->sibling->var_name;
@@ -296,6 +297,7 @@ void TreeNode::genTable(namespore *nowtable) {
             cerror("function return these type not implement");
         }
         nowtable = nowtable->newChild();
+
         //参数列表
         auto temp = this->child->sibling->sibling->child;
 
@@ -312,6 +314,8 @@ void TreeNode::genTable(namespore *nowtable) {
                 cerror("function parameter these type not implement");
             }
             nowtable->param_list.push_back(nowtable->var[para_name]);
+            temp=temp->sibling;
+            temp=temp->sibling;
         }
         nowtable->fa->structvar[function_name] = nowtable;
 
@@ -333,6 +337,7 @@ void TreeNode::genTable(namespore *nowtable) {
         nowtable = nowtable->newChild();
         nowtable->fa->structvar[struct_name] = nowtable;
         auto temp = this->child->sibling->child;
+
         while (temp != nullptr) {
             temp->genTable(nowtable);
             temp = temp->sibling;
@@ -371,14 +376,15 @@ VarNode TreeNode::getIdValType(namespore *nowtable) {
     //todo
     if (this->vartype == VAR_TYPE) {
         auto id_name = this->child->var_name;
+
         auto temptable = nowtable;
         while (temptable != nullptr && temptable->var.find(id_name) == temptable->var.end()) {
             temptable = temptable->fa;
         }
-        if (temptable == nullptr || temptable->var[id_name].arr_dim != this->child->sibling->array_dim) {
+
+        if (temptable == nullptr || temptable->var[id_name].arr_dim != this->child->array_dim) {
             cerror("can not find this IDENTIFIER");
         }
-
         if (temptable->var[id_name].basetype == INT || temptable->var[id_name].basetype == CHARR) {
             return VarNode(temptable->var[id_name].basetype);
         } else if (temptable->var[id_name].basetype == CONST_INT) {
@@ -483,6 +489,7 @@ VarNode TreeNode::getExprType(namespore *nowtable) {
         if (tmp1.returnType == CONST_INT || tmp1.returnType == CONST_CHAR) {
             cerror("const var can not assgin");
         }
+
         if (this->child->sibling != nullptr) {
             auto tmp2 = this->child->sibling->getExprType(nowtable);
             if (tmp2.basetype != tmp1.basetype) {
@@ -527,7 +534,7 @@ VarNode TreeNode::getExprType(namespore *nowtable) {
         } else if (this->exptype == OR_BOOL || this->exptype == AND_BOOL) {
             auto tmp1 = this->child->getExprType(nowtable);
             auto tmp2 = this->child->sibling->getExprType(nowtable);
-            if (tmp1.basetype != tmp2.basetype || tmp1.basetype != BOOLL) {
+            if (tmp2.basetype != BOOLL || tmp1.basetype != BOOLL) {
                 cerror("or / and calculate only be used in bool");
             }
             return VarNode(BOOLL);
@@ -545,7 +552,7 @@ VarNode TreeNode::getExprType(namespore *nowtable) {
             if (tmp1.basetype != tmp2.basetype) {
                 cerror("compera only be used in same type");
             }
-            return VarNode(tmp1.basetype);
+            return VarNode(BOOLL);
         } else if (this->exptype == ADD || this->exptype == SUB || this->exptype == MUL || this->exptype == DIV ||
                    this->exptype == MOD) {
             auto tmp1 = this->child->getExprType(nowtable);

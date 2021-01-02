@@ -203,7 +203,7 @@ FUNCTION_CALL: IDENTIFIER left_br_small parameter_list_call_or_empty right_br_sm
 
 //结构体定义
 STRUCT_DEFINE: T_STRUCT IDENTIFIER program_block{
-	$$ = new TreeNode($1->lineno,NODE_STRUCT);
+	$$ = new TreeNode($2->lineno,NODE_STRUCT);
 	$$ -> var_name=$2->var_name;
 	$$ -> addChild($2);
 	$$ -> addChild($3);
@@ -528,10 +528,10 @@ ASSIGN: IDENTIFIER_val LOP_ASSIGN expr{
 ;
 
 Scanf_format:Interval Get_Addr IDENTIFIER_val Scanf_format{
-	TreeNode* node = new TreeNode($2->lineno, NODE_FORMT);
+	TreeNode* node = new TreeNode($3->lineno, NODE_FORMT);
    	node->ftype = SCANF_FORMAT;
    	node->addChild($3);
-   	if($3!=nullptr){
+   	if($4!=nullptr){
     		node->addChild($4->child);
     	}
     	$$ = node;
@@ -543,7 +543,7 @@ Print_format : Interval expr Print_format{
 	node->ftype = PRINT_FORMAT;
 	node->addChild($2);
 	if($3!=nullptr){
-		node->addChild($2->child);
+		node->addChild($3->child);
 	}
 	$$ = node;
 }
