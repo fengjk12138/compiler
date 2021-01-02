@@ -247,7 +247,7 @@ void TreeNode::genTable(namespore *nowtable) {
         }
         nowtable->var[struct_name] = VarNode(STRUCT_DEF);
         nowtable = nowtable->newChild();
-
+        nowtable->fa->structvar[struct_name] = nowtable;
         auto temp = this->child->sibling->child;
         while (temp != nullptr) {
             temp->genTable(nowtable);
@@ -350,23 +350,19 @@ VarNode TreeNode::getIdValType(namespore *nowtable) {
             temptable->var[id_name].arr_dim != this->child->array_dim) {
             cerror("can not find this IDENTIFIER");
         }
-        //todo:struct check
-//        auto id_name_p2 = this->child->sibling->var_name;
-//        if (temptable->var[id_name_p2].basetype == INT || temptable->var[id_name].basetype == CHARR) {
-//            return VarNode(temptable->var[id_name].basetype);
-//        } else if (temptable->var[id_name].basetype == CONST_INT) {
-//            auto tempret = VarNode(INT);
-//            tempret.returnType = CONST_INT;
-//            return tempret;
-//        } else if (temptable->var[id_name].basetype == CONST_CHAR) {
-//            auto tempret = VarNode(CHAR);
-//            tempret.returnType = CONST_CHAR;
-//            return tempret;
-//        } else {
-//            cerror("this is not a right IDENTIFIER");
-//        }
-
-
+        auto tempspore = typetableRoot->structvar[temptable->var[id_name].nametype];
+        if (tempspore->var.find(this->child->sibling->var_name) == tempspore->var.end()) {
+            cerror("this struct does not have such member");
+        }
+        if ((tempspore->var[this->child->sibling->var_name].basetype == INT ||
+             tempspore->var[this->child->sibling->var_name].basetype == CHARR
+             || tempspore->var[this->child->sibling->var_name].basetype == INT_ARRAY ||
+             tempspore->var[this->child->sibling->var_name].basetype == CHAR_ARRAY) &&
+            (tempspore->var[this->child->sibling->var_name].arr_dim == this->child->sibling->array_dim)) {
+            //todo
+        } else {
+            cerror("struct member is not right");
+        }
     } else {
         cerror("not support this type");
     }

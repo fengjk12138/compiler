@@ -123,20 +123,24 @@ enum Spetype {
 struct VarNode {
     int pos;
     int arr_dim = 0;
-    std::vector<int>dim_num;
+    std::vector<int> dim_num;
     Basetype returnType;
     Spetype spetype;
     Basetype basetype;
     string nametype;
+
     VarNode(Basetype);
 };
+
 struct namespore {
-    std::vector<VarNode>param_list;
+    std::vector <VarNode> param_list;
     namespore *fa = nullptr;
     std::map <std::string, VarNode> var;
+    std::map<std::string, namespore *> structvar;
     namespore *child = nullptr;
     namespore *sibling = nullptr;
-    namespore* newChild();
+
+    namespore *newChild();
 
     bool findExist();
 };
@@ -150,10 +154,15 @@ public:
     TreeNode *sibling = nullptr;
 
     void addChild(TreeNode *);
-    VarNode getExprType(namespore* );
-    VarNode getIdValType(namespore* );
+
+    VarNode getExprType(namespore *);
+
+    VarNode getIdValType(namespore *);
+
     void addSibling(TreeNode *);
+
     static void cerror(const char *mess);
+
     void printAST(); // 先输出自己 + 孩子们的id；再依次让每个孩子输出AST。
     void genTable(namespore *);
 
@@ -173,7 +182,7 @@ public:
 
     //变量使用
     Type *type;  // int void char变量、类型、表达式结点，有类型。
-    int array_dim=0;
+    int array_dim = 0;
     VarType vartype; //变量(常量)的类型
     string var_name;
 //public:
@@ -186,7 +195,6 @@ public:
 public:
     TreeNode(int lineno, NodeType type);
 };
-
 
 
 #endif
