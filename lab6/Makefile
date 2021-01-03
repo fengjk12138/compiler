@@ -31,5 +31,5 @@ test:
 	./bin/main tests/test.c > result.txt
 
 asm:    
-    g++ ./result.txt -m32 -o ./main.out
+	g++ ./result.txt -m32 -o ./main.out
 	qemu-i386 ./main.out < ./input.txt
