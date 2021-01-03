@@ -156,7 +156,7 @@ public:
 
     TreeNode *child = nullptr;
     TreeNode *sibling = nullptr;
-
+    void printIdAdress(namespore *);
     void addChild(TreeNode *);
 
     VarNode getExprType(namespore *);
@@ -166,7 +166,7 @@ public:
     void addSibling(TreeNode *);
 
     static void cerror(const char *mess);
-
+    void printExpr(namespore *);
     void printAST(namespore *); // 先输出自己 + 孩子们的id；再依次让每个孩子输出AST。
     void genTable(namespore *);
     static VarNode findVar(namespore *,string);
@@ -179,8 +179,8 @@ public:
 
     //常量使用
     int var_id;
-    int int_val;
-    char ch_val;
+    int int_val=0;
+    char ch_val=0;
     bool b_val;
     string str_val;
     string label;

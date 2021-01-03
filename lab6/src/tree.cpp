@@ -31,6 +31,7 @@ TreeNode::TreeNode(int lineno, NodeType type) {
 
 string in_function = "";
 int in_loop = 0;
+int nowpos = 4;
 
 void TreeNode::genTable(namespore *nowtable) {
     if (this->nodeType == NODE_PROG) {
@@ -73,11 +74,15 @@ void TreeNode::genTable(namespore *nowtable) {
                 if (now->child->vartype == VAR_TYPE) {
                     if (child1->type == TYPE_INT) {
                         nowtable->var[now->child->child->var_name] = VarNode(INT);
+                        nowtable->var[now->child->child->var_name].pos = nowpos;
+                        nowpos += 4;
                         if (now->child->sibling != nullptr)
                             nowtable->var[now->child->child->var_name].constval = now->child->sibling->int_val;
                         nowtable->var[now->child->child->var_name].varsize = 4;
                     } else if (child1->type == TYPE_CHAR) {
                         nowtable->var[now->child->child->var_name] = VarNode(CHARR);
+                        nowtable->var[now->child->child->var_name].pos = nowpos;
+                        nowpos += 4;
                         if (now->child->sibling != nullptr)
                             nowtable->var[now->child->child->var_name].constval = now->child->sibling->ch_val;
                         nowtable->var[now->child->child->var_name].varsize = 4;
@@ -87,7 +92,8 @@ void TreeNode::genTable(namespore *nowtable) {
                             cerror("can not init with not a integer");
                         }
                         nowtable->var[now->child->child->var_name] = VarNode(CONST_INT);
-
+                        nowtable->var[now->child->child->var_name].pos = nowpos;
+                        nowpos += 4;
                         nowtable->var[now->child->child->var_name].constval = now->child->sibling->int_val;
                         nowtable->var[now->child->child->var_name].varsize = 4;
                     } else if (child1->type == TYPE_CHAR_CONST) {
@@ -95,6 +101,8 @@ void TreeNode::genTable(namespore *nowtable) {
                             cerror("can not init with not a char const");
                         }
                         nowtable->var[now->child->child->var_name] = VarNode(CONST_CHAR);
+                        nowtable->var[now->child->child->var_name].pos = nowpos;
+                        nowpos += 4;
                         nowtable->var[now->child->child->var_name].constval = now->child->sibling->ch_val;
                         nowtable->var[now->child->child->var_name].varsize = 4;
                     } else if (child1->type == TYPE_COMPOSE_STRUCT) {
@@ -105,8 +113,11 @@ void TreeNode::genTable(namespore *nowtable) {
                             cerror("this IDENTIFIER is not a struct");
                         }
                         nowtable->var[now->child->child->var_name] = VarNode(STRUCT);
+                        nowtable->var[now->child->child->var_name].pos = nowpos;
+
                         nowtable->var[now->child->child->var_name].nametype = child1->var_name;
                         nowtable->var[now->child->child->var_name].varsize = typetableRoot->var[child1->var_name].varsize;
+                        nowpos += nowtable->var[now->child->child->var_name].varsize;
                     } else {
                         cerror("type not support");
                     }
@@ -153,6 +164,8 @@ void TreeNode::genTable(namespore *nowtable) {
                         arr_dim_list = arr_dim_list->sibling;
                     }
                     nowtable->var[now->child->child->var_name].varsize = base_array * basesize;
+                    nowtable->var[now->child->child->var_name].pos = nowpos;
+                    nowpos += base_array * basesize;
                 } else {
                     cerror("not right type");
                 }
@@ -334,6 +347,7 @@ void TreeNode::genTable(namespore *nowtable) {
     } else if (this->nodeType == NODE_FUNC) {
         string function_name = this->child->sibling->var_name;
         in_function = function_name;
+        nowpos = 4;
         if (nowtable->var.find(function_name) != nowtable->var.end()) {
             cerror("Repeated definition");
         }
@@ -384,22 +398,15 @@ void TreeNode::genTable(namespore *nowtable) {
             tmp->genTable(nowtable);
             tmp = tmp->sibling;
         }
-
         nowtable = nowtable->fa;
+        nowtable->var[function_name].varsize = nowpos - 4;
         in_function = "";
     } else if (this->nodeType == NODE_STRUCT) {
         auto struct_name = this->var_name;
-        if (nowtable->var.
-                find(struct_name)
-            != nowtable->var.
-
-                end()
-
-                ) {
+        if (nowtable->var.find(struct_name) != nowtable->var.end()) {
             cerror("Repeated definition");
         }
-        nowtable->var[struct_name] =
-                VarNode(STRUCT_DEF);
+        nowtable->var[struct_name] = VarNode(STRUCT_DEF);
         nowtable = nowtable->newChild();
         nowtable->fa->structvar[struct_name] =
                 nowtable;
@@ -495,9 +502,6 @@ void TreeNode::printAST(namespore *nowtable) {
                 cout << x.first << ": .fill " << x.second.varsize << endl;
             }
         }
-
-        //遍历stmt todo
-
         temp = this->child->child;
         while (temp != nullptr) {
             if (temp->nodeType == NODE_FUNC) {
@@ -514,27 +518,32 @@ void TreeNode::printAST(namespore *nowtable) {
         if (in_function == "") {
             return;
         }
-
-        if (this->stype == STMT_SCANF) {
-
-            int back = 0;
-            vector <string> should_push;
+        if (this->stype == STMT_DECL) {
             auto temp = this->child->sibling->child;
             while (temp != nullptr) {
-                VarNode save = findVar(nowtable, temp->var_name);
-                if (save.is_global) {
-                    if (save.basetype == INT || save.basetype == CHARR) {
-                        cout << "pushl $" << temp->var_name << endl;
-                        back += 4;
-                    }
+                if (temp->ftype == DEFINE_FORMAT_INIT) {
+                    auto vattemp = findVar(nowtable, temp->child->var_name);
+                    cout << "pushl %eax" << endl;
+                    cout << "movl $" << temp->child->sibling->ch_val + temp->child->sibling->int_val << ", %eax"
+                         << endl;
+                    cout << "movl %eax," << -vattemp.pos << "(%ebp)" << endl;
+                    cout << "popl %eax" << endl;
                 }
+                temp = temp->sibling;
+            }
+        } else if (this->stype == STMT_SCANF) {
 
-
+            int back = 0;
+            vector < TreeNode * > should_push;
+            auto temp = this->child->sibling->child;
+            while (temp != nullptr) {
+                should_push.push_back(temp);
                 temp = temp->sibling;
             }
             reverse(should_push.begin(), should_push.end());
             for (auto x:should_push) {
-                cout << x << endl;
+                x->printIdAdress(nowtable);
+                back += 4;
             }
             cout << "pushl $" << this->label << endl;
             back += 4;
@@ -542,22 +551,16 @@ void TreeNode::printAST(namespore *nowtable) {
             cout << "addl $" << back << ", %esp" << endl;
         } else if (this->stype == STMT_PRINT) {
             int back = 0;
-            vector <string> should_push;
+            vector < TreeNode * > should_push;
             auto temp = this->child->sibling->child;
             while (temp != nullptr) {
-                VarNode save = findVar(nowtable, temp->var_name);
-                if (save.is_global) {
-                    if (save.basetype == INT || save.basetype == CHARR) {
-                        should_push.push_back("pushl " + temp->var_name + '\n');
-                        back += 4;
-                    }
-                }
-
+                should_push.push_back(temp);
                 temp = temp->sibling;
             }
             reverse(should_push.begin(), should_push.end());
             for (auto x:should_push) {
-                cout << x << endl;
+                x->printExpr(nowtable);
+                back += 4;
             }
             cout << "pushl $" << this->label << endl;
             back += 4;
@@ -573,6 +576,7 @@ void TreeNode::printAST(namespore *nowtable) {
         cout << this->var_name << ":" << endl;
         cout << "pushl %ebp" << endl;
         cout << "movl %esp, %ebp" << endl;
+        cout << "addl $" << typetableRoot->var[this->var_name].varsize << ",%esp" << endl;
         in_function = this->var_name;
         //参数列表偏移值计算 todo
 
@@ -585,6 +589,7 @@ void TreeNode::printAST(namespore *nowtable) {
         }
         //todo return 修改
 
+        cout << "subl $" << typetableRoot->var[this->var_name].varsize << ",%esp" << endl;
         cout << "movl $0, %eax" << endl;
         cout << "popl %ebp" << endl;
         cout << "ret" << endl;
@@ -596,6 +601,64 @@ void TreeNode::printAST(namespore *nowtable) {
     }
 }
 
+void TreeNode::printExpr(namespore *nowtable) {
+    if (this->exptype == IDENTIFIER_VAL) {
+        this->printIdAdress(nowtable);
+        cout << "popl %eax" << endl;
+        cout << "pushl (%eax)" << endl;
+    } else if (this->exptype == INTEGER_VAL) {
+        cout << "pushl $" << this->int_val << endl;
+    } else if (this->exptype == CHAR_VAL) {
+        cout << "pushl $" << this->ch_val << endl;
+    } else if (this->exptype == ADD) {
+        this->child->printExpr(nowtable);
+        this->child->sibling->printExpr(nowtable);
+        cout << "popl %eax" << endl;
+        cout << "popl %ebx" << endl;
+        cout << "addl %ebx, %eax" << endl;
+        cout << "pushl %eax" << endl;
+    } else if (this->exptype == SUB) {
+        this->child->printExpr(nowtable);
+        this->child->sibling->printExpr(nowtable);
+        cout << "popl %eax" << endl;
+        cout << "popl %ebx" << endl;
+        cout << "subl %eax, %ebx" << endl;
+        cout << "pushl %ebx" << endl;
+    } else if (this->exptype == MUL) {
+        this->child->printExpr(nowtable);
+        this->child->sibling->printExpr(nowtable);
+        cout << "popl %eax" << endl;
+        cout << "popl %ebx" << endl;
+        cout << "imull %ebx" << endl;
+        cout << "pushl %eax" << endl;
+    } else if (this->exptype == DIV) {
+        this->child->printExpr(nowtable);
+        this->child->sibling->printExpr(nowtable);
+        cout << "movl $0, %edx" << endl;
+        cout << "popl %ebx" << endl;
+        cout << "popl %eax" << endl;
+        cout << "idivl %ebx" << endl;
+        cout << "pushl %eax" << endl;
+    } else if (this->exptype == MOD) {
+        this->child->printExpr(nowtable);
+        this->child->sibling->printExpr(nowtable);
+        cout << "movl $0, %edx" << endl;
+        cout << "popl %ebx" << endl;
+        cout << "popl %eax" << endl;
+        cout << "idivl %ebx" << endl;
+        cout << "pushl %edx" << endl;
+    } else if (this->exptype == POS) {
+        this->child->printExpr(nowtable);
+    } else if (this->exptype == NEG) {
+        this->child->printExpr(nowtable);
+        cout << "movl $0, %ebx" << endl;
+        cout << "popl %eax" << endl;
+        cout << "subl %eax, %ebx" << endl;
+        cout << "pushl %ebx" << endl;
+    }
+
+
+}
 
 VarNode TreeNode::getIdValType(namespore *nowtable) {
     //todo
@@ -735,7 +798,6 @@ VarNode TreeNode::getExprType(namespore *nowtable) {
                 if (typetableRoot->var[funcname].basetype != FUNC) {
                     cerror("this is not a function");
                 }
-
                 auto temp = this->child->sibling;
                 if (temp->array_dim != typetableRoot->structvar[funcname]->param_list.size()) {
                     cerror("param num not right");
@@ -792,6 +854,56 @@ VarNode TreeNode::getExprType(namespore *nowtable) {
         }
     } else {
         cerror("this is not expr");
+    }
+}
+
+void TreeNode::printIdAdress(namespore *nowtable) {
+    if (this->vartype == VAR_TYPE) {
+        auto vattmp = findVar(nowtable, this->var_name);
+        if (vattmp.is_global) {
+            cout << "movl $" << this->var_name << ", %eax" << endl;
+            cout << "pushl %eax" << endl;
+        } else {
+            cout << "movl %ebp, %eax" << endl;
+            cout << "addl $-" << vattmp.pos << ", %eax" << endl;
+            cout << "pushl %eax" << endl;
+        }
+    } else if (this->vartype == ARRAY_TYPE) {
+        auto vattmp = findVar(nowtable, this->var_name);
+        auto temp = this->child->sibling->child;
+        cout << "pushl $0" << endl;
+        for (int i = 0; i < vattmp.dim_num.size() - 1; i++) {
+            temp->printExpr(nowtable);
+            cout << "popl %eax" << endl;
+            int tmp = vattmp.dim_num[i];
+            cout << "movl $" << tmp << ", %edx" << endl;
+            cout << "imull %edx" << endl;
+            cout << "popl %ebx" << endl;
+            cout << "addl %ebx, %eax" << endl;
+            cout << "pushl %eax" << endl;
+            temp = temp->sibling;
+        }
+        temp->printExpr(nowtable);
+        cout<<"popl %ebx"<<endl;
+        cout<<"popl %eax"<<endl;
+        cout<<"addl %ebx, %eax"<<endl;
+        if (vattmp.is_global) {
+            cout << "movl $" << this->var_name << ", %ebx" << endl;
+            cout << "movl $4, %edx" << endl;
+            cout << "imull %edx" << endl;
+            cout << "addl %ebx, %eax" << endl;
+            cout << "pushl %eax" << endl;
+        } else {
+            cout << "movl $4, %edx" << endl;
+            cout << "imull %edx" << endl;
+            cout << "subl %ebp, %eax" << endl;
+            cout << "movl $-" << vattmp.pos << ", %ebx" << endl;
+            cout << "subl %eax, %ebx" << endl;
+            cout << "pushl %ebx" << endl;
+        }
+    } else if (this->vartype == STRUCT_TYPE) {
+
+
     }
 }
 

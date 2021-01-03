@@ -448,9 +448,11 @@ Bool_Cal_expr: expr OR expr{
 expr
 : IDENTIFIER_val{
 	$$->nodeType=NODE_EXPR;
+	$$->var_name=$1->var_name;
 	$$->exptype=IDENTIFIER_VAL;
     	$$->array_dim = $1->array_dim;
     	$$->addChild($1->child);
+    	$$->vartype=$1->vartype;
 }
 | INTEGER {
     	$$->nodeType=NODE_EXPR;
