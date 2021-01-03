@@ -1,6 +1,6 @@
 int a=10;
 int c;
-int 4;
+int asd;
 int main(){
   scanf("%d",&a);
   printf("%d",a);

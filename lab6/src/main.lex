@@ -123,7 +123,8 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
     node->vartype = CONST_STRING_TYPE;
     node->str_val = string(yytext);
     yylval = node;
-    node->label="STR"+string(stringnum);
+    node->label="STR"+to_string(stringnum);
+    stringnum++;
     return STRING;
 }
 

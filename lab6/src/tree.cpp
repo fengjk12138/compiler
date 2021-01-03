@@ -446,6 +446,9 @@ VarNode TreeNode::findVar(namespore *nowtable, string name) {
     while (nowtable != nullptr && nowtable->var.find(name) == nowtable->var.end()) {
         nowtable = nowtable->fa;
     }
+    if (nowtable == nullptr) {
+        cerror("is nullptr??");
+    }
     return nowtable->var[name];
 }
 
@@ -495,6 +498,16 @@ void TreeNode::printAST(namespore *nowtable) {
 
         //遍历stmt todo
 
+        temp = this->child->child;
+        while (temp != nullptr) {
+            if (temp->nodeType == NODE_FUNC) {
+                temp->printAST(typetableRoot->structvar[temp->child->sibling->var_name]);
+            } else if (temp->nodeType == NODE_STRUCT) {
+                temp->printAST(typetableRoot->structvar[temp->var_name]);
+            }
+            temp = temp->sibling;
+        }
+
         //最后输出
         cout << ".section .note.GNU-stack,\"\",@progbits" << endl;
     } else if (this->nodeType == NODE_STMT) {
@@ -503,6 +516,7 @@ void TreeNode::printAST(namespore *nowtable) {
         }
 
         if (this->stype == STMT_SCANF) {
+
             int back = 0;
             vector <string> should_push;
             auto temp = this->child->sibling->child;
@@ -534,7 +548,7 @@ void TreeNode::printAST(namespore *nowtable) {
                 VarNode save = findVar(nowtable, temp->var_name);
                 if (save.is_global) {
                     if (save.basetype == INT || save.basetype == CHARR) {
-                        should_push.push_back("pushl $" + temp->var_name + '\n');
+                        should_push.push_back("pushl " + temp->var_name + '\n');
                         back += 4;
                     }
                 }
@@ -547,7 +561,7 @@ void TreeNode::printAST(namespore *nowtable) {
             }
             cout << "pushl $" << this->label << endl;
             back += 4;
-            cout << "call scanf" << endl;
+            cout << "call printf" << endl;
             cout << "addl $" << back << ", %esp" << endl;
 
         }
@@ -557,7 +571,7 @@ void TreeNode::printAST(namespore *nowtable) {
         cout << ".globl " << this->var_name << endl;
         cout << ".type " << this->var_name << ", @function" << endl;
         cout << this->var_name << ":" << endl;
-        cout << "pushl %epb" << endl;
+        cout << "pushl %ebp" << endl;
         cout << "movl %esp, %ebp" << endl;
         in_function = this->var_name;
         //参数列表偏移值计算 todo
@@ -566,14 +580,14 @@ void TreeNode::printAST(namespore *nowtable) {
         //函数体生成
         auto tmp = this->child->sibling->sibling->sibling->child;
         while (tmp != nullptr) {
-            tmp->genTable(nowtable->structvar[this->var_name]);
+            tmp->printAST(nowtable);
             tmp = tmp->sibling;
         }
         //todo return 修改
 
-        cout<<"movl $0, %eax"<<endl;
+        cout << "movl $0, %eax" << endl;
         cout << "popl %ebp" << endl;
-        cout<<"ret"<<endl;
+        cout << "ret" << endl;
         in_function = "";
     } else if (this->nodeType == NODE_STRUCT) {
 
