@@ -44,107 +44,105 @@ void TreeNode::genTable(namespore *nowtable) {
             auto child2 = this->child->sibling;//参数列表
             auto child1 = this->child;
             for (auto now = child2->child; now != nullptr; now = now->sibling) {
-                {
-                    //now define_with_init
-                    //now child IDENTIFIER_val
-                    //now child child IDENTIFIER
-                    if (nowtable->var.find(now->child->child->var_name) != nowtable->var.end()) {
-                        cerror("Repeated definition");
-                    }
-                    //类型检查，查看是否赋值初始化符合逻辑
-                    if (now->ftype == DEFINE_FORMAT_INIT) {
-                        auto exprtype = now->child->sibling->getExprType(nowtable);
-                        if ((exprtype.basetype == INT &&
-                             (child1->type == TYPE_INT || child1->type == TYPE_INT_CONST)) ||
-                            (exprtype.basetype == CHARR &&
-                             (child1->type == TYPE_CHAR || child1->type == TYPE_CHAR_CONST))) {
-                            //todo
-                        } else cerror("type transform not support");
+                //now define_with_init
+                //now child IDENTIFIER_val
+                //now child child IDENTIFIER
+                if (nowtable->var.find(now->child->child->var_name) != nowtable->var.end()) {
+                    cerror("Repeated definition");
+                }
+                //类型检查，查看是否赋值初始化符合逻辑
+                if (now->ftype == DEFINE_FORMAT_INIT) {
+                    auto exprtype = now->child->sibling->getExprType(nowtable);
+                    if ((exprtype.basetype == INT &&
+                         (child1->type == TYPE_INT || child1->type == TYPE_INT_CONST)) ||
+                        (exprtype.basetype == CHARR &&
+                         (child1->type == TYPE_CHAR || child1->type == TYPE_CHAR_CONST))) {
+                        //todo
+                    } else cerror("type transform not support");
 
-                    } else if (now->ftype == DEFINE_FORMAT) {
-                        if (child1->type == TYPE_INT_CONST || child1->type == TYPE_CHAR_CONST) {
-                            cerror("const var without initialization");
+                } else if (now->ftype == DEFINE_FORMAT) {
+                    if (child1->type == TYPE_INT_CONST || child1->type == TYPE_CHAR_CONST) {
+                        cerror("const var without initialization");
+                    }
+                } else {
+                    cerror("error define");
+                }
+
+                if (now->child->vartype == VAR_TYPE) {
+                    nowtable->var[now->child->child->var_name].varsize = 4;
+                    if (child1->type == TYPE_INT)
+                        nowtable->var[now->child->child->var_name] = VarNode(INT);
+                    else if (child1->type == TYPE_CHAR)
+                        nowtable->var[now->child->child->var_name] = VarNode(CHARR);
+                    else if (child1->type == TYPE_INT_CONST) {
+                        if (now->child->sibling->exptype != INTEGER_VAL) {
+                            cerror("can not init with not a integer");
                         }
+                        nowtable->var[now->child->child->var_name].constval = now->child->sibling->int_val;
+                        nowtable->var[now->child->child->var_name] = VarNode(CONST_INT);
+                    } else if (child1->type == TYPE_CHAR_CONST) {
+                        if (now->child->sibling->exptype != CHAR_VAL) {
+                            cerror("can not init with not a char const");
+                        }
+                        nowtable->var[now->child->child->var_name].constval = now->child->sibling->ch_val;
+                        nowtable->var[now->child->child->var_name] = VarNode(CONST_CHAR);
+                    } else if (child1->type == TYPE_COMPOSE_STRUCT) {
+                        if (typetableRoot->var.find(child1->var_name) == typetableRoot->var.end()) {
+                            cerror("this struct not define");
+                        }
+                        if (typetableRoot->var[child1->var_name].basetype != STRUCT_DEF) {
+                            cerror("this IDENTIFIER is not a struct");
+                        }
+                        nowtable->var[now->child->child->var_name] = VarNode(STRUCT);
+                        nowtable->var[now->child->child->var_name].nametype = child1->var_name;
+                        nowtable->var[now->child->child->var_name].varsize = typetableRoot->var[child1->var_name].varsize;
                     } else {
-                        cerror("error define");
+                        cerror("type not support");
                     }
+                } else if (now->child->vartype == ARRAY_TYPE) {
+                    int basesize = 4;
 
-                    if (now->child->vartype == VAR_TYPE) {
-                        nowtable->var[now->child->child->var_name].varsize = 4;
-                        if (child1->type == TYPE_INT)
-                            nowtable->var[now->child->child->var_name] = VarNode(INT);
-                        else if (child1->type == TYPE_CHAR)
-                            nowtable->var[now->child->child->var_name] = VarNode(CHARR);
-                        else if (child1->type == TYPE_INT_CONST) {
-                            if (now->child->sibling->exptype != INTEGER_VAL) {
-                                cerror("can not init with not a integer");
-                            }
-                            nowtable->var[now->child->child->var_name].constval = now->child->sibling->int_val;
-                            nowtable->var[now->child->child->var_name] = VarNode(CONST_INT);
-                        } else if (child1->type == TYPE_CHAR_CONST) {
-                            if (now->child->sibling->exptype != CHAR_VAL) {
-                                cerror("can not init with not a char const");
-                            }
-                            nowtable->var[now->child->child->var_name].constval = now->child->sibling->ch_val;
-                            nowtable->var[now->child->child->var_name] = VarNode(CONST_CHAR);
-                        } else if (child1->type == TYPE_COMPOSE_STRUCT) {
-                            if (typetableRoot->var.find(child1->var_name) == typetableRoot->var.end()) {
-                                cerror("this struct not define");
-                            }
-                            if (typetableRoot->var[child1->var_name].basetype != STRUCT_DEF) {
-                                cerror("this IDENTIFIER is not a struct");
-                            }
-                            nowtable->var[now->child->child->var_name] = VarNode(STRUCT);
-                            nowtable->var[now->child->child->var_name].nametype = child1->var_name;
-                            nowtable->var[now->child->child->var_name].varsize = typetableRoot->var[child1->var_name].varsize;
-                        } else {
-                            cerror("type not support");
+                    if (child1->type == TYPE_INT)
+                        nowtable->var[now->child->child->var_name] = VarNode(INT_ARRAY);
+                    else if (child1->type == TYPE_CHAR)
+                        nowtable->var[now->child->child->var_name] = VarNode(CHAR_ARRAY);
+                    else if (child1->type == TYPE_INT_CONST) {
+                        cerror("not support const int array");
+                        nowtable->var[now->child->child->var_name] = VarNode(CONST_INT_ARRAY);
+                    } else if (child1->type == TYPE_CHAR_CONST) {
+                        cerror("not support const char array");
+                        nowtable->var[now->child->child->var_name] = VarNode(CONST_CHAR_ARRAY);
+                    } else if (child1->type == TYPE_COMPOSE_STRUCT) {
+                        if (typetableRoot->var.find(child1->var_name) == typetableRoot->var.end()) {
+                            cerror("this struct not define");
                         }
-                    } else if (now->child->vartype == ARRAY_TYPE) {
-                        int basesize = 4;
-
-                        if (child1->type == TYPE_INT)
-                            nowtable->var[now->child->child->var_name] = VarNode(INT_ARRAY);
-                        else if (child1->type == TYPE_CHAR)
-                            nowtable->var[now->child->child->var_name] = VarNode(CHAR_ARRAY);
-                        else if (child1->type == TYPE_INT_CONST) {
-                            cerror("not support const int array");
-                            nowtable->var[now->child->child->var_name] = VarNode(CONST_INT_ARRAY);
-                        } else if (child1->type == TYPE_CHAR_CONST) {
-                            cerror("not support const char array");
-                            nowtable->var[now->child->child->var_name] = VarNode(CONST_CHAR_ARRAY);
-                        } else if (child1->type == TYPE_COMPOSE_STRUCT) {
-                            if (typetableRoot->var.find(child1->var_name) == typetableRoot->var.end()) {
-                                cerror("this struct not define");
-                            }
-                            if (typetableRoot->var[child1->var_name].basetype != STRUCT_DEF) {
-                                cerror("this IDENTIFIER is not a struct");
-                            }
-                            basesize = typetableRoot->var[child1->var_name].varsize;
-                            nowtable->var[now->child->child->var_name] = VarNode(STRUCT_ARRAY);
-                            nowtable->var[now->child->child->var_name].nametype = child1->var_name;
-
-                        } else {
-                            cerror("type not support");
+                        if (typetableRoot->var[child1->var_name].basetype != STRUCT_DEF) {
+                            cerror("this IDENTIFIER is not a struct");
                         }
+                        basesize = typetableRoot->var[child1->var_name].varsize;
+                        nowtable->var[now->child->child->var_name] = VarNode(STRUCT_ARRAY);
+                        nowtable->var[now->child->child->var_name].nametype = child1->var_name;
 
-                        nowtable->var[now->child->child->var_name].arr_dim = now->child->child->sibling->array_dim;
-                        auto arr_dim_list = now->child->child->sibling->child;//arr_dim
-                        //检查声明的数组下标是否是int
-                        int base_array = 1;
-                        while (arr_dim_list != nullptr) {
-                            if (arr_dim_list->exptype != INTEGER_VAL) {
-                                cerror("arr dim should be a integer");
-                            } else {
-                                base_array *= arr_dim_list->int_val;
-                                nowtable->var[now->child->child->var_name].dim_num.push_back(arr_dim_list->int_val);
-                            }
-                            arr_dim_list = arr_dim_list->sibling;
-                        }
-                        nowtable->var[now->child->child->var_name].varsize = base_array * basesize;
                     } else {
-                        cerror("not right type");
+                        cerror("type not support");
                     }
+
+                    nowtable->var[now->child->child->var_name].arr_dim = now->child->child->sibling->array_dim;
+                    auto arr_dim_list = now->child->child->sibling->child;//arr_dim
+                    //检查声明的数组下标是否是int
+                    int base_array = 1;
+                    while (arr_dim_list != nullptr) {
+                        if (arr_dim_list->exptype != INTEGER_VAL) {
+                            cerror("arr dim should be a integer");
+                        } else {
+                            base_array *= arr_dim_list->int_val;
+                            nowtable->var[now->child->child->var_name].dim_num.push_back(arr_dim_list->int_val);
+                        }
+                        arr_dim_list = arr_dim_list->sibling;
+                    }
+                    nowtable->var[now->child->child->var_name].varsize = base_array * basesize;
+                } else {
+                    cerror("not right type");
                 }
             }
         } else if (this->stype == STMT_BREAK) {
@@ -408,23 +406,116 @@ namespore *namespore::newChild() {
 
 
 void TreeNode::printAST(namespore *nowtable) {
+
     if (this->nodeType == NODE_PROG) {
+        //声明全局变量
+        auto temp = this->child->child;
+        while (temp != nullptr) {
+            if (temp->nodeType == NODE_STMT && temp->stype == STMT_DECL) {
+                auto child2 = this->child->sibling;//参数列表
+                auto child1 = this->child;
+                for (auto now = child2->child; now != nullptr; now = now->sibling) {
+                    //now define_with_init
+                    //now child IDENTIFIER_val
+                    //now child child IDENTIFIER
+                    //类型检查，查看是否赋值初始化符合逻辑
+                    if (now->ftype == DEFINE_FORMAT_INIT) {
+                        auto exprtype = now->child->sibling->getExprType(nowtable);
+                        if ((child1->type == TYPE_INT || child1->type == TYPE_INT_CONST)) {
+                            if (now->child->sibling->exptype != INTEGER_VAL) {
+                                cerror("int gobal var should be init with int");
+                            }
+                        } else if ((child1->type == TYPE_CHAR || child1->type == TYPE_CHAR_CONST)) {
+                            if (now->child->sibling->exptype != CHAR_VAL) {
+                                cerror("char gobal var should be init with char");
+                            }
+                        }
+                    }
 
-    } else if (this->nodeType == NODE_STMT) {
-        if (this->stype == STMT_DECL) {
-            if (in_function == "") {
-                //全局变量
 
+                    if (now->child->vartype == VAR_TYPE) {
+                        if (child1->type == TYPE_INT || )
+                            nowtable->var[now->child->child->var_name] = VarNode(INT);
+                        else if (child1->type == TYPE_CHAR)
+                            nowtable->var[now->child->child->var_name] = VarNode(CHARR);
+                        else if (child1->type == TYPE_INT_CONST) {
+                            if (now->child->sibling->exptype != INTEGER_VAL) {
+                                cerror("can not init with not a integer");
+                            }
+                            nowtable->var[now->child->child->var_name].constval = now->child->sibling->int_val;
+                            nowtable->var[now->child->child->var_name] = VarNode(CONST_INT);
+                        } else if (child1->type == TYPE_CHAR_CONST) {
+                            if (now->child->sibling->exptype != CHAR_VAL) {
+                                cerror("can not init with not a char const");
+                            }
+                            nowtable->var[now->child->child->var_name].constval = now->child->sibling->ch_val;
+                            nowtable->var[now->child->child->var_name] = VarNode(CONST_CHAR);
+                        } else if (child1->type == TYPE_COMPOSE_STRUCT) {
+                            if (typetableRoot->var.find(child1->var_name) == typetableRoot->var.end()) {
+                                cerror("this struct not define");
+                            }
+                            if (typetableRoot->var[child1->var_name].basetype != STRUCT_DEF) {
+                                cerror("this IDENTIFIER is not a struct");
+                            }
+                            nowtable->var[now->child->child->var_name] = VarNode(STRUCT);
+                            nowtable->var[now->child->child->var_name].nametype = child1->var_name;
+                            nowtable->var[now->child->child->var_name].varsize = typetableRoot->var[child1->var_name].varsize;
+                        } else {
+                            cerror("type not support");
+                        }
+                    } else if (now->child->vartype == ARRAY_TYPE) {
+                        int basesize = 4;
 
+                        if (child1->type == TYPE_INT)
+                            nowtable->var[now->child->child->var_name] = VarNode(INT_ARRAY);
+                        else if (child1->type == TYPE_CHAR)
+                            nowtable->var[now->child->child->var_name] = VarNode(CHAR_ARRAY);
+                        else if (child1->type == TYPE_INT_CONST) {
+                            cerror("not support const int array");
+                            nowtable->var[now->child->child->var_name] = VarNode(CONST_INT_ARRAY);
+                        } else if (child1->type == TYPE_CHAR_CONST) {
+                            cerror("not support const char array");
+                            nowtable->var[now->child->child->var_name] = VarNode(CONST_CHAR_ARRAY);
+                        } else if (child1->type == TYPE_COMPOSE_STRUCT) {
+                            if (typetableRoot->var.find(child1->var_name) == typetableRoot->var.end()) {
+                                cerror("this struct not define");
+                            }
+                            if (typetableRoot->var[child1->var_name].basetype != STRUCT_DEF) {
+                                cerror("this IDENTIFIER is not a struct");
+                            }
+                            basesize = typetableRoot->var[child1->var_name].varsize;
+                            nowtable->var[now->child->child->var_name] = VarNode(STRUCT_ARRAY);
+                            nowtable->var[now->child->child->var_name].nametype = child1->var_name;
 
+                        } else {
+                            cerror("type not support");
+                        }
 
-
-            } else {
-
+                        nowtable->var[now->child->child->var_name].arr_dim = now->child->child->sibling->array_dim;
+                        auto arr_dim_list = now->child->child->sibling->child;//arr_dim
+                        //检查声明的数组下标是否是int
+                        int base_array = 1;
+                        while (arr_dim_list != nullptr) {
+                            if (arr_dim_list->exptype != INTEGER_VAL) {
+                                cerror("arr dim should be a integer");
+                            } else {
+                                base_array *= arr_dim_list->int_val;
+                                nowtable->var[now->child->child->var_name].dim_num.push_back(arr_dim_list->int_val);
+                            }
+                            arr_dim_list = arr_dim_list->sibling;
+                        }
+                        nowtable->var[now->child->child->var_name].varsize = base_array * basesize;
+                    } else {
+                        cerror("not right type");
+                    }
+                }
 
             }
-
-
+            temp = temp->sibling;
+        }
+    } else if (this->nodeType == NODE_STMT) {
+        if (in_function == "") {
+            return;
         }
     } else if (this->nodeType == NODE_FUNC) {
 
@@ -634,7 +725,8 @@ VarNode TreeNode::getExprType(namespore *nowtable) {
     }
 }
 
-VarNode::VarNode(Basetype a = INT) {
+VarNode::VarNode(Basetype
+                 a = INT) {
     this->basetype = a;
 }
 

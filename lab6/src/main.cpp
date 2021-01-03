@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
     yyparse();
     if(root != NULL) {
         root->genTable(typetableRoot);
-        root->printAST();
+        root->printAST(typetableRoot);
     }
     return 0;
 }

@@ -164,7 +164,7 @@ public:
 
     static void cerror(const char *mess);
 
-    void printAST(); // 先输出自己 + 孩子们的id；再依次让每个孩子输出AST。
+    void printAST(namespore* ); // 先输出自己 + 孩子们的id；再依次让每个孩子输出AST。
     void genTable(namespore *);
 
 public:
