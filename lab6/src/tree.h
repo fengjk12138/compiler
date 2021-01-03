@@ -123,6 +123,7 @@ enum Spetype {
 struct VarNode {
     int pos;
     int arr_dim = 0;
+    int constval=0;
     std::vector<int> dim_num;
     Basetype returnType;
     Spetype spetype;
@@ -140,7 +141,7 @@ struct namespore {
     std::map<std::string, namespore *> structvar;
     namespore *child = nullptr;
     namespore *sibling = nullptr;
-
+    int fieldsize=0;
     namespore *newChild();
 
 };

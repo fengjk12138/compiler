@@ -75,11 +75,19 @@ void TreeNode::genTable(namespore *nowtable) {
                             nowtable->var[now->child->child->var_name] = VarNode(INT);
                         else if (child1->type == TYPE_CHAR)
                             nowtable->var[now->child->child->var_name] = VarNode(CHARR);
-                        else if (child1->type == TYPE_INT_CONST)
+                        else if (child1->type == TYPE_INT_CONST) {
+                            if (now->child->sibling->exptype != INTEGER_VAL) {
+                                cerror("can not init with not a integer");
+                            }
+                            nowtable->var[now->child->child->var_name].constval = now->child->sibling->int_val;
                             nowtable->var[now->child->child->var_name] = VarNode(CONST_INT);
-                        else if (child1->type == TYPE_CHAR_CONST)
+                        } else if (child1->type == TYPE_CHAR_CONST) {
+                            if (now->child->sibling->exptype != CHAR_VAL) {
+                                cerror("can not init with not a char const");
+                            }
+                            nowtable->var[now->child->child->var_name].constval = now->child->sibling->ch_val;
                             nowtable->var[now->child->child->var_name] = VarNode(CONST_CHAR);
-                        else if (child1->type == TYPE_COMPOSE_STRUCT) {
+                        } else if (child1->type == TYPE_COMPOSE_STRUCT) {
                             if (typetableRoot->var.find(child1->var_name) == typetableRoot->var.end()) {
                                 cerror("this struct not define");
                             }
@@ -99,11 +107,13 @@ void TreeNode::genTable(namespore *nowtable) {
                             nowtable->var[now->child->child->var_name] = VarNode(INT_ARRAY);
                         else if (child1->type == TYPE_CHAR)
                             nowtable->var[now->child->child->var_name] = VarNode(CHAR_ARRAY);
-                        else if (child1->type == TYPE_INT_CONST)
+                        else if (child1->type == TYPE_INT_CONST) {
+                            cerror("not support const int array");
                             nowtable->var[now->child->child->var_name] = VarNode(CONST_INT_ARRAY);
-                        else if (child1->type == TYPE_CHAR_CONST)
+                        } else if (child1->type == TYPE_CHAR_CONST) {
+                            cerror("not support const char array");
                             nowtable->var[now->child->child->var_name] = VarNode(CONST_CHAR_ARRAY);
-                        else if (child1->type == TYPE_COMPOSE_STRUCT) {
+                        } else if (child1->type == TYPE_COMPOSE_STRUCT) {
                             if (typetableRoot->var.find(child1->var_name) == typetableRoot->var.end()) {
                                 cerror("this struct not define");
                             }
@@ -182,6 +192,10 @@ void TreeNode::genTable(namespore *nowtable) {
             } else {
                 tmp->genTable(nowtable);
             }
+
+            for (auto x:nowtable->var) {
+                nowtable->fieldsize += x.second.varsize;
+            }
             nowtable = nowtable->fa;
             in_loop--;
         } else if (this->stype == STMT_FOR) {
@@ -210,6 +224,9 @@ void TreeNode::genTable(namespore *nowtable) {
                 }
             } else {
                 tmp->genTable(nowtable);
+            }
+            for (auto x:nowtable->var) {
+                nowtable->fieldsize += x.second.varsize;
             }
             nowtable = nowtable->fa;
             in_loop--;
@@ -273,6 +290,9 @@ void TreeNode::genTable(namespore *nowtable) {
                     }
                 } else {
                     tmp->genTable(nowtable);
+                }
+                for (auto x:nowtable->var) {
+                    nowtable->fieldsize += x.second.varsize;
                 }
                 nowtable = nowtable->fa;
             }
@@ -387,9 +407,32 @@ namespore *namespore::newChild() {
 }
 
 
-void TreeNode::printAST() {
+void TreeNode::printAST(namespore *nowtable) {
+    if (this->nodeType == NODE_PROG) {
+
+    } else if (this->nodeType == NODE_STMT) {
+        if (this->stype == STMT_DECL) {
+            if (in_function == "") {
+                //全局变量
 
 
+
+
+
+            } else {
+
+
+            }
+
+
+        }
+    } else if (this->nodeType == NODE_FUNC) {
+
+    } else if (this->nodeType == NODE_STRUCT) {
+
+    } else {
+        cerror("not support");
+    }
 }
 
 
