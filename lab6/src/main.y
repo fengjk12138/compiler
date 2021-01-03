@@ -269,6 +269,7 @@ IDENTIFIER_val: IDENTIFIER Array_Dim{
 	$$ =new TreeNode($1->lineno, NODE_VAR);
 	$$->addChild($1);
 	$$->addChild($3);
+	$$->var_name = $1->var_name;
 	$$->vartype=STRUCT_TYPE;
 }
 ;

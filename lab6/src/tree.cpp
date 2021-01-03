@@ -1,4 +1,5 @@
 #include "tree.h"
+#include <algorithm>
 
 namespore *typetableRoot;
 using namespace std;
@@ -33,6 +34,7 @@ int in_loop = 0;
 
 void TreeNode::genTable(namespore *nowtable) {
     if (this->nodeType == NODE_PROG) {
+        cout << ".section .rodata" << endl;
         nowtable = typetableRoot = new namespore();
         auto tmp = this->child->child;
         while (tmp != nullptr) {
@@ -490,16 +492,63 @@ void TreeNode::printAST(namespore *nowtable) {
                 cout << x.first << ": .fill " << x.second.varsize << endl;
             }
         }
+
+        //遍历stmt todo
+
+        //最后输出
+        cout << ".section .note.GNU-stack,\"\",@progbits" << endl;
     } else if (this->nodeType == NODE_STMT) {
         if (in_function == "") {
             return;
         }
 
         if (this->stype == STMT_SCANF) {
-            vector<string>
+            int back = 0;
+            vector <string> should_push;
+            auto temp = this->child->sibling->child;
+            while (temp != nullptr) {
+                VarNode save = findVar(nowtable, temp->var_name);
+                if (save.is_global) {
+                    if (save.basetype == INT || save.basetype == CHARR) {
+                        cout << "pushl $" << temp->var_name << endl;
+                        back += 4;
+                    }
+                }
 
 
+                temp = temp->sibling;
+            }
+            reverse(should_push.begin(), should_push.end());
+            for (auto x:should_push) {
+                cout << x << endl;
+            }
+            cout << "pushl $" << this->label << endl;
+            back += 4;
+            cout << "call scanf" << endl;
+            cout << "addl $" << back << ", %esp" << endl;
         } else if (this->stype == STMT_PRINT) {
+            int back = 0;
+            vector <string> should_push;
+            auto temp = this->child->sibling->child;
+            while (temp != nullptr) {
+                VarNode save = findVar(nowtable, temp->var_name);
+                if (save.is_global) {
+                    if (save.basetype == INT || save.basetype == CHARR) {
+                        should_push.push_back("pushl $" + temp->var_name + '\n');
+                        back += 4;
+                    }
+                }
+
+                temp = temp->sibling;
+            }
+            reverse(should_push.begin(), should_push.end());
+            for (auto x:should_push) {
+                cout << x << endl;
+            }
+            cout << "pushl $" << this->label << endl;
+            back += 4;
+            cout << "call scanf" << endl;
+            cout << "addl $" << back << ", %esp" << endl;
 
         }
 
@@ -507,7 +556,9 @@ void TreeNode::printAST(namespore *nowtable) {
         cout << ".text" << endl;
         cout << ".globl " << this->var_name << endl;
         cout << ".type " << this->var_name << ", @function" << endl;
+        cout << this->var_name << ":" << endl;
         cout << "pushl %epb" << endl;
+        cout << "movl %esp, %ebp" << endl;
         in_function = this->var_name;
         //参数列表偏移值计算 todo
 
@@ -518,8 +569,11 @@ void TreeNode::printAST(namespore *nowtable) {
             tmp->genTable(nowtable->structvar[this->var_name]);
             tmp = tmp->sibling;
         }
+        //todo return 修改
 
-
+        cout<<"movl $0, %eax"<<endl;
+        cout << "popl %ebp" << endl;
+        cout<<"ret"<<endl;
         in_function = "";
     } else if (this->nodeType == NODE_STRUCT) {
 

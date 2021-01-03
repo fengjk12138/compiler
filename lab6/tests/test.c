@@ -1,4 +1,8 @@
- if(a>1)
-  if(b>1)
-    b=1;
-    else a=1;
+int a=10;
+int c;
+int 4;
+int main(){
+  scanf("%d",&a);
+  printf("%d",a);
+  return 0;
+}
