@@ -28,8 +28,8 @@ clean:
 	rm -f src/*.output src/main.lex.yy.cpp src/main.tab.cpp src/main.tab.h src/main.output src/pch.h.gch $(TARGET) *.o ./bin/* 
 
 test: 
-	./bin/main tests/test.c > result.txt
+	./bin/main tests/test.c > result.s
 
 asm:    
-	g++ ./result.txt -m32 -o ./main.out
-	qemu-i386 ./main.out < ./input.txt
+	g++ ./result.s -m32 -o ./main.out
+	./main.out
