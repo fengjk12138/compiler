@@ -566,6 +566,9 @@ void TreeNode::printAST(namespore *nowtable) {
             back += 4;
             cout << "call printf" << endl;
             cout << "addl $" << back << ", %esp" << endl;
+        }else if(this->sibling==STMT_FOR){
+
+
 
         }
 
@@ -655,8 +658,76 @@ void TreeNode::printExpr(namespore *nowtable) {
         cout << "popl %eax" << endl;
         cout << "subl %eax, %ebx" << endl;
         cout << "pushl %ebx" << endl;
-    }
+    } else if (this->exptype == OR_BOOL) {
+        this->child->printExpr(nowtable);
+        this->child->sibling->printExpr(nowtable);
+        cout << "popl %eax" << endl;
+        cout << "popl %ebx" << endl;
+        cout << "or %eax, %ebx" << endl;
+        cout << "pushl %ebx" << endl;
 
+    } else if (this->exptype == AND_BOOL) {
+        this->child->printExpr(nowtable);
+        this->child->sibling->printExpr(nowtable);
+        cout << "popl %eax" << endl;
+        cout << "popl %ebx" << endl;
+        cout << "and %eax, %ebx" << endl;
+        cout << "pushl %ebx" << endl;
+
+    } else if (this->exptype == NOT_BOOL) {
+        this->child->printExpr(nowtable);
+        cout << "popl %eax" << endl;
+        cout << "not %eax" << endl;
+        cout << "pushl %eax" << endl;
+    } else if (this->exptype == EQL) {
+        this->child->printExpr(nowtable);
+        this->child->sibling->printExpr(nowtable);
+        cout << "popl %eax" << endl;
+        cout << "popl %ebx" << endl;
+        cout << "cmpl %ebx, %eax" << endl;
+        cout << "sete %cl" << endl;
+        cout << "pushl %ecx" << endl;
+    } else if (this->exptype == SMALLEQL) {
+        this->child->printExpr(nowtable);
+        this->child->sibling->printExpr(nowtable);
+        cout << "popl %eax" << endl;
+        cout << "popl %ebx" << endl;
+        cout << "cmpl %ebx, %eax" << endl;
+        cout << "setle %cl" << endl;
+        cout << "pushl %ecx" << endl;
+    } else if (this->exptype == NOTEQL) {
+        this->child->printExpr(nowtable);
+        this->child->sibling->printExpr(nowtable);
+        cout << "popl %eax" << endl;
+        cout << "popl %ebx" << endl;
+        cout << "cmpl %ebx, %eax" << endl;
+        cout << "setne %cl" << endl;
+        cout << "pushl %ecx" << endl;
+    } else if (this->exptype == BIGEQL) {
+        this->child->printExpr(nowtable);
+        this->child->sibling->printExpr(nowtable);
+        cout << "popl %eax" << endl;
+        cout << "popl %ebx" << endl;
+        cout << "cmpl %ebx, %eax" << endl;
+        cout << "setge %cl" << endl;
+        cout << "pushl %ecx" << endl;
+    } else if (this->exptype == BIG) {
+        this->child->printExpr(nowtable);
+        this->child->sibling->printExpr(nowtable);
+        cout << "popl %eax" << endl;
+        cout << "popl %ebx" << endl;
+        cout << "cmpl %ebx, %eax" << endl;
+        cout << "setg %cl" << endl;
+        cout << "pushl %ecx" << endl;
+    } else if (this->exptype == SMALL) {
+        this->child->printExpr(nowtable);
+        this->child->sibling->printExpr(nowtable);
+        cout << "popl %eax" << endl;
+        cout << "popl %ebx" << endl;
+        cout << "cmpl %ebx, %eax" << endl;
+        cout << "setl %cl" << endl;
+        cout << "pushl %ecx" << endl;
+    }
 
 }
 
@@ -884,9 +955,9 @@ void TreeNode::printIdAdress(namespore *nowtable) {
             temp = temp->sibling;
         }
         temp->printExpr(nowtable);
-        cout<<"popl %ebx"<<endl;
-        cout<<"popl %eax"<<endl;
-        cout<<"addl %ebx, %eax"<<endl;
+        cout << "popl %ebx" << endl;
+        cout << "popl %eax" << endl;
+        cout << "addl %ebx, %eax" << endl;
         if (vattmp.is_global) {
             cout << "movl $" << this->var_name << ", %ebx" << endl;
             cout << "movl $4, %edx" << endl;
