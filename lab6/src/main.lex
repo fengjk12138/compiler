@@ -3,6 +3,7 @@
 #include "common.h"
 #include "main.tab.h"  // yacc header
 int lineno=1;
+int stringnum=0;
 //int beginDef=0;
 //VarNode *root_var = new VarNode;
 //VarNode *now = root_var;
@@ -122,6 +123,7 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
     node->vartype = CONST_STRING_TYPE;
     node->str_val = string(yytext);
     yylval = node;
+    node->label="STR"+string(stringnum);
     return STRING;
 }
 

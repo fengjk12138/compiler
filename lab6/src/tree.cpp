@@ -306,6 +306,9 @@ void TreeNode::genTable(namespore *nowtable) {
             }
         } else if (this->stype == STMT_SCANF) {
             auto temp = this->child->sibling;
+            this->label = this->child->label;
+            cout << this->label << ":" << endl;
+            cout << "\t .string " << this->child->str_val << endl;
             if (temp != nullptr) {
                 temp = temp->child;
                 while (temp != nullptr) {
@@ -314,7 +317,9 @@ void TreeNode::genTable(namespore *nowtable) {
                 }
             }
         } else if (this->stype == STMT_PRINT) {
-
+            this->label = this->child->label;
+            cout << this->label << ":" << endl;
+            cout << "\t .string " << this->child->str_val << endl;
             auto temp = this->child->sibling;
             if (temp != nullptr) {
                 temp = temp->child;
@@ -327,17 +332,10 @@ void TreeNode::genTable(namespore *nowtable) {
     } else if (this->nodeType == NODE_FUNC) {
         string function_name = this->child->sibling->var_name;
         in_function = function_name;
-        if (nowtable->var.
-                find(function_name)
-            != nowtable->var.
-
-                end()
-
-                ) {
+        if (nowtable->var.find(function_name) != nowtable->var.end()) {
             cerror("Repeated definition");
         }
-        nowtable->var[function_name] =
-                VarNode(FUNC);
+        nowtable->var[function_name] = VarNode(FUNC);
         if (this->child->type == TYPE_INT) {
             nowtable->var[function_name].
                     returnType = INT;
@@ -357,13 +355,7 @@ void TreeNode::genTable(namespore *nowtable) {
 
         while (temp != nullptr) {
             auto para_name = temp->sibling->var_name;
-            if (nowtable->var.
-                    find(para_name)
-                != nowtable->var.
-
-                    end()
-
-                    ) {
+            if (nowtable->var.find(para_name) != nowtable->var.end()) {
                 cerror("Repeated definition");
             }
             if (temp->type == TYPE_INT) {
@@ -387,8 +379,7 @@ void TreeNode::genTable(namespore *nowtable) {
 //函数体
         auto tmp = this->child->sibling->sibling->sibling->child;
         while (tmp != nullptr) {
-            tmp->
-                    genTable(nowtable);
+            tmp->genTable(nowtable);
             tmp = tmp->sibling;
         }
 
@@ -449,6 +440,13 @@ namespore *namespore::newChild() {
     }
 }
 
+VarNode TreeNode::findVar(namespore *nowtable, string name) {
+    while (nowtable != nullptr && nowtable->var.find(name) == nowtable->var.end()) {
+        nowtable = nowtable->fa;
+    }
+    return nowtable->var[name];
+}
+
 
 void TreeNode::printAST(namespore *nowtable) {
     if (this->nodeType == NODE_PROG) {
@@ -482,7 +480,8 @@ void TreeNode::printAST(namespore *nowtable) {
         }
         cout << ".section .data" << endl;
 
-        for (auto x:nowtable->var) {
+        for (auto &x:nowtable->var) {
+            x.second.is_global = 1;
             if (x.second.basetype == INT || x.second.basetype == CONST_INT
                 || x.second.basetype == CHARR || x.second.basetype == CONST_CHAR) {
                 cout << x.first << ": .int " << x.second.constval << endl;
@@ -495,8 +494,33 @@ void TreeNode::printAST(namespore *nowtable) {
         if (in_function == "") {
             return;
         }
-    } else if (this->nodeType == NODE_FUNC) {
 
+        if (this->stype == STMT_SCANF) {
+            vector<string>
+
+
+        } else if (this->stype == STMT_PRINT) {
+
+        }
+
+    } else if (this->nodeType == NODE_FUNC) {
+        cout << ".text" << endl;
+        cout << ".globl " << this->var_name << endl;
+        cout << ".type " << this->var_name << ", @function" << endl;
+        cout << "pushl %epb" << endl;
+        in_function = this->var_name;
+        //参数列表偏移值计算 todo
+
+
+        //函数体生成
+        auto tmp = this->child->sibling->sibling->sibling->child;
+        while (tmp != nullptr) {
+            tmp->genTable(nowtable->structvar[this->var_name]);
+            tmp = tmp->sibling;
+        }
+
+
+        in_function = "";
     } else if (this->nodeType == NODE_STRUCT) {
 
     } else {
@@ -703,8 +727,7 @@ VarNode TreeNode::getExprType(namespore *nowtable) {
     }
 }
 
-VarNode::VarNode(Basetype
-                 a = INT) {
+VarNode::VarNode(Basetype a = INT) {
     this->basetype = a;
 }
 

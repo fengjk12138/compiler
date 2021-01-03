@@ -20,7 +20,7 @@ yacc: src/main.tab.c
 main: src/pch.h.gch
 	$(CC) $(CFLAGS) $(shell ls ./src/*.cpp) -o ./bin/main
 
-.PHONY: all clean main run lex yacc test debug link testscope asm nasm example-code out
+.PHONY: all clean main run lex yacc test debug link testscope asm nasm example-code out asm
 
 run: lex yacc main
 
@@ -29,3 +29,7 @@ clean:
 
 test: 
 	./bin/main tests/test.c > result.txt
+
+asm:    
+        g++ ./result.txt -m32 -o ./main.out
+        qemu-i386 ./main.out < ./input.txt

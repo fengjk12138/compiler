@@ -121,16 +121,18 @@ enum Spetype {
 };
 
 struct VarNode {
+    bool is_global = 0;
     int pos;
     int arr_dim = 0;
-    int constval=0;
+    int constval = 0;
     std::vector<int> dim_num;
     Basetype returnType;
     Spetype spetype;
     Basetype basetype;
     string nametype;
-    int varsize=0;
-    int offset_struct=0;
+    int varsize = 0;
+    int offset_struct = 0;
+
     VarNode(Basetype);
 };
 
@@ -141,7 +143,8 @@ struct namespore {
     std::map<std::string, namespore *> structvar;
     namespore *child = nullptr;
     namespore *sibling = nullptr;
-    int fieldsize=0;
+    int fieldsize = 0;
+
     namespore *newChild();
 
 };
@@ -164,9 +167,9 @@ public:
 
     static void cerror(const char *mess);
 
-    void printAST(namespore* ); // 先输出自己 + 孩子们的id；再依次让每个孩子输出AST。
+    void printAST(namespore *); // 先输出自己 + 孩子们的id；再依次让每个孩子输出AST。
     void genTable(namespore *);
-
+    static VarNode findVar(namespore *);
 public:
     ExpType exptype;
 
@@ -180,7 +183,7 @@ public:
     char ch_val;
     bool b_val;
     string str_val;
-
+    string label;
     //变量使用
     Type type;  // int void char变量、类型、表达式结点，有类型。
     int array_dim = 0;
