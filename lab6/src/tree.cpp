@@ -577,34 +577,47 @@ void TreeNode::printAST(namespore *nowtable) {
             cout << "call printf" << endl;
             cout << "addl $" << back << ", %esp" << endl;
         } else if (this->stype == STMT_FOR) {
+            int hisnum = label_num;
+            label_num++;
             this->child->printAST(nowtable);
-            cout << "FOR_CHECK" << to_string(label_num) << ":" << endl;
+            cout << "FOR_CHECK" << to_string(hisnum) << ":" << endl;
             this->child->sibling->printExpr(nowtable);
             cout << "popl %eax" << endl;
             cout << "and $1, %eax" << endl;
             cout << "cmp $1, %eax" << endl;
-            cout << "je " << "FOR_WORK" << to_string(label_num) << endl;
-            cout << "jmp " << "FOR_END" << to_string(label_num) << endl;
-            cout << "FOR_WORK" << to_string(label_num) << ":" << endl;
+            cout << "je " << "FOR_WORK" << to_string(hisnum) << endl;
+            cout << "jmp " << "FOR_END" << to_string(hisnum) << endl;
+            cout << "FOR_WORK" << to_string(hisnum) << ":" << endl;
             //todo for循环stmt遍历
-            auto tmp = this->child->sibling->sibling->sibling->child;
-            auto temp = nowtable->child;
-            while (tmp != nullptr) {
-                if (tmp->nodeType == NODE_STMT) {
-                    if (tmp->stype == STMT_IF || tmp->stype == STMT_IF_ELSE || tmp->stype == STMT_WHILE ||
-                        tmp->stype == STMT_FOR) {
-                        tmp->printAST(temp);
-                        temp = temp->sibling;
-                    } else tmp->printAST(nowtable);
+            auto tmp = this->child->sibling->sibling->sibling;
+            if (tmp->stype == STMT_BLOCK) {
+                tmp = tmp->child;
+                auto temp = nowtable->child;
+                while (tmp != nullptr) {
+                    if (tmp->nodeType == NODE_STMT) {
+                        if (tmp->stype == STMT_IF || tmp->stype == STMT_IF_ELSE || tmp->stype == STMT_WHILE ||
+                            tmp->stype == STMT_FOR) {
+                            tmp->printAST(temp);
+                            temp = temp->sibling;
+                        } else tmp->printAST(nowtable);
+                    } else
+                        tmp->printAST(nowtable);
+                    tmp = tmp->sibling;
                 }
-                tmp->printAST(nowtable);
-                tmp = tmp->sibling;
+            } else {
+                auto temp = nowtable->child;
+                if (tmp->stype == STMT_IF || tmp->stype == STMT_IF_ELSE || tmp->stype == STMT_WHILE ||
+                    tmp->stype == STMT_FOR) {
+                    tmp->printAST(temp);
+                    temp = temp->sibling;
+                } else tmp->printAST(nowtable);
+
             }
-            cout << "FOR_INC" << to_string(label_num) << ":" << endl;
+            cout << "FOR_INC" << to_string(hisnum) << ":" << endl;
             this->child->sibling->sibling->printAST(nowtable);
-            cout << "jmp " << "FOR_CHECK" << to_string(label_num) << endl;
-            cout << "FOR_END" << to_string(label_num) << ":" << endl;
-            label_num++;
+            cout << "jmp " << "FOR_CHECK" << to_string(hisnum) << endl;
+            cout << "FOR_END" << to_string(hisnum) << ":" << endl;
+
         } else if (this->stype == STMT_WHILE) {
 
         } else if (this->stype == STMT_IF) {
@@ -790,7 +803,7 @@ void TreeNode::printExpr(namespore *nowtable) {
         this->child->sibling->printExpr(nowtable);
         cout << "popl %eax" << endl;
         cout << "popl %ebx" << endl;
-        cout << "cmpl %ebx, %eax" << endl;
+        cout << "cmpl %eax, %ebx" << endl;
         cout << "sete %cl" << endl;
         cout << "pushl %ecx" << endl;
     } else if (this->exptype == SMALLEQL) {
@@ -798,7 +811,7 @@ void TreeNode::printExpr(namespore *nowtable) {
         this->child->sibling->printExpr(nowtable);
         cout << "popl %eax" << endl;
         cout << "popl %ebx" << endl;
-        cout << "cmpl %ebx, %eax" << endl;
+        cout << "cmpl %eax, %ebx" << endl;
         cout << "setle %cl" << endl;
         cout << "pushl %ecx" << endl;
     } else if (this->exptype == NOTEQL) {
@@ -806,7 +819,7 @@ void TreeNode::printExpr(namespore *nowtable) {
         this->child->sibling->printExpr(nowtable);
         cout << "popl %eax" << endl;
         cout << "popl %ebx" << endl;
-        cout << "cmpl %ebx, %eax" << endl;
+        cout << "cmpl %eax, %ebx" << endl;
         cout << "setne %cl" << endl;
         cout << "pushl %ecx" << endl;
     } else if (this->exptype == BIGEQL) {
@@ -814,7 +827,7 @@ void TreeNode::printExpr(namespore *nowtable) {
         this->child->sibling->printExpr(nowtable);
         cout << "popl %eax" << endl;
         cout << "popl %ebx" << endl;
-        cout << "cmpl %ebx, %eax" << endl;
+        cout << "cmpl %eax, %ebx" << endl;
         cout << "setge %cl" << endl;
         cout << "pushl %ecx" << endl;
     } else if (this->exptype == BIG) {
@@ -822,7 +835,7 @@ void TreeNode::printExpr(namespore *nowtable) {
         this->child->sibling->printExpr(nowtable);
         cout << "popl %eax" << endl;
         cout << "popl %ebx" << endl;
-        cout << "cmpl %ebx, %eax" << endl;
+        cout << "cmpl %eax, %ebx" << endl;
         cout << "setg %cl" << endl;
         cout << "pushl %ecx" << endl;
     } else if (this->exptype == SMALL) {
@@ -830,7 +843,7 @@ void TreeNode::printExpr(namespore *nowtable) {
         this->child->sibling->printExpr(nowtable);
         cout << "popl %eax" << endl;
         cout << "popl %ebx" << endl;
-        cout << "cmpl %ebx, %eax" << endl;
+        cout << "cmpl %eax, %ebx" << endl;
         cout << "setl %cl" << endl;
         cout << "pushl %ecx" << endl;
     }
