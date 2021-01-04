@@ -545,12 +545,12 @@ Print_format : Interval expr Print_format{
 	TreeNode* node = new TreeNode($2->lineno, NODE_FORMT);
 	node->ftype = PRINT_FORMAT;
 	node->addChild($2);
-	if($3!=nullptr){
+	if($3->child!=nullptr){
 		node->addChild($3->child);
 	}
 	$$ = node;
 }
-| { $$=nullptr;}
+| { $$=new TreeNode(lineno, NODE_EMPTY);}
 
 %%
 

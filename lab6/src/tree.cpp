@@ -226,6 +226,7 @@ void TreeNode::genTable(namespore *nowtable) {
             nowtable = nowtable->fa;
             in_loop--;
         } else if (this->stype == STMT_FOR) {
+//            cout<<"hhh"<<endl;
             in_loop++;
             nowtable = nowtable->newChild();
 
@@ -640,9 +641,9 @@ void TreeNode::printAST(namespore *nowtable) {
         } else if (this->stype == STMT_ASSIGN_DIV) {
             this->child->printIdAdress(nowtable);
             this->child->sibling->printExpr(nowtable);
-            cout << "movl $0, %edx" << endl;
             cout << "popl %ebx" << endl;
             cout << "popl %eax" << endl;
+            cout << "cltd" << endl;
             cout << "movl %eax, %ecx" << endl;
             cout << "movl (%eax), %eax" << endl;
             cout << "idivl %ebx" << endl;
@@ -650,9 +651,9 @@ void TreeNode::printAST(namespore *nowtable) {
         } else if (this->stype == STMT_ASSIGN_MOD) {
             this->child->printIdAdress(nowtable);
             this->child->sibling->printExpr(nowtable);
-            cout << "movl $0, %edx" << endl;
             cout << "popl %ebx" << endl;
             cout << "popl %eax" << endl;
+            cout << "cltd" << endl;
             cout << "movl %eax, %ecx" << endl;
             cout << "movl (%eax), %eax" << endl;
             cout << "idivl %ebx" << endl;
@@ -669,7 +670,7 @@ void TreeNode::printAST(namespore *nowtable) {
         cout << this->var_name << ":" << endl;
         cout << "pushl %ebp" << endl;
         cout << "movl %esp, %ebp" << endl;
-        cout << "addl $" << typetableRoot->var[this->var_name].varsize << ",%esp" << endl;
+        cout << "subl $" << typetableRoot->var[this->var_name].varsize << ",%esp" << endl;
         in_function = this->var_name;
         //参数列表偏移值计算 todo
         timestamp++;
@@ -692,7 +693,7 @@ void TreeNode::printAST(namespore *nowtable) {
         }
         //todo return 修改
 
-        cout << "subl $" << typetableRoot->var[this->var_name].varsize << ",%esp" << endl;
+        cout << "addl $" << typetableRoot->var[this->var_name].varsize << ",%esp" << endl;
         cout << "movl $0, %eax" << endl;
         cout << "popl %ebp" << endl;
         cout << "ret" << endl;
@@ -742,17 +743,17 @@ void TreeNode::printExpr(namespore *nowtable) {
     } else if (this->exptype == DIV) {
         this->child->printExpr(nowtable);
         this->child->sibling->printExpr(nowtable);
-        cout << "movl $0, %edx" << endl;
         cout << "popl %ebx" << endl;
         cout << "popl %eax" << endl;
+        cout << "cltd" << endl;
         cout << "idivl %ebx" << endl;
         cout << "pushl %eax" << endl;
     } else if (this->exptype == MOD) {
         this->child->printExpr(nowtable);
         this->child->sibling->printExpr(nowtable);
-        cout << "movl $0, %edx" << endl;
         cout << "popl %ebx" << endl;
         cout << "popl %eax" << endl;
+        cout << "cltd" << endl;
         cout << "idivl %ebx" << endl;
         cout << "pushl %edx" << endl;
     } else if (this->exptype == POS) {
