@@ -121,6 +121,7 @@ enum Spetype {
 };
 
 struct VarNode {
+    int timestamp=0;
     bool is_global = 0;
     int pos;
     int arr_dim = 0;

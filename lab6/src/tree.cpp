@@ -3,6 +3,7 @@
 
 namespore *typetableRoot;
 using namespace std;
+int label_num = 0;
 
 void TreeNode::addChild(TreeNode *child) {
     if (this->child == nullptr) {
@@ -32,6 +33,7 @@ TreeNode::TreeNode(int lineno, NodeType type) {
 string in_function = "";
 int in_loop = 0;
 int nowpos = 4;
+int timestamp = 1;
 
 void TreeNode::genTable(namespore *nowtable) {
     if (this->nodeType == NODE_PROG) {
@@ -169,7 +171,9 @@ void TreeNode::genTable(namespore *nowtable) {
                 } else {
                     cerror("not right type");
                 }
+                nowtable->var[now->child->child->var_name].timestamp = timestamp;
             }
+            timestamp++;
         } else if (this->stype == STMT_BREAK) {
             if (in_loop == 0) {
                 cerror("break should be used in loop");
@@ -383,12 +387,13 @@ void TreeNode::genTable(namespore *nowtable) {
             } else {
                 cerror("function parameter these type not implement");
             }
+            nowtable->var[para_name].timestamp = timestamp;
             nowtable->param_list.
-                    push_back(nowtable
-                                      ->var[para_name]);
+                    push_back(nowtable->var[para_name]);
             temp = temp->sibling;
             temp = temp->sibling;
         }
+        timestamp++;
         nowtable->fa->structvar[function_name] =
                 nowtable;
 
@@ -417,13 +422,9 @@ void TreeNode::genTable(namespore *nowtable) {
                     genTable(nowtable);
             temp = temp->sibling;
         }
-        for (
-            auto &x
-                :nowtable->var) {
-            x.second.
-                    offset_struct = nowtable->fa->var[struct_name].varsize;
-            nowtable->fa->var[struct_name].varsize += x.second.
-                    varsize;
+        for (auto &x:nowtable->var) {
+            x.second.offset_struct = nowtable->fa->var[struct_name].varsize;
+            nowtable->fa->var[struct_name].varsize += x.second.varsize;
         }
         nowtable = nowtable->fa;
 
@@ -450,8 +451,12 @@ namespore *namespore::newChild() {
 }
 
 VarNode TreeNode::findVar(namespore *nowtable, string name) {
-    while (nowtable != nullptr && nowtable->var.find(name) == nowtable->var.end()) {
-        nowtable = nowtable->fa;
+    while (true) {
+        if (nowtable == nullptr)
+            break;
+        if (nowtable->var.find(name) == nowtable->var.end() || nowtable->var[name].timestamp > timestamp)
+            nowtable = nowtable->fa;
+        else break;
     }
     if (nowtable == nullptr) {
         cerror("is nullptr??");
@@ -463,6 +468,7 @@ VarNode TreeNode::findVar(namespore *nowtable, string name) {
 void TreeNode::printAST(namespore *nowtable) {
     if (this->nodeType == NODE_PROG) {
         //声明全局变量
+        timestamp = 0;
         auto temp = this->child->child;
         while (temp != nullptr) {
             if (temp->nodeType == NODE_STMT && temp->stype == STMT_DECL) {
@@ -506,6 +512,8 @@ void TreeNode::printAST(namespore *nowtable) {
         while (temp != nullptr) {
             if (temp->nodeType == NODE_FUNC) {
                 temp->printAST(typetableRoot->structvar[temp->child->sibling->var_name]);
+            } else if (temp->nodeType == NODE_STMT) {
+                timestamp++;
             } else if (temp->nodeType == NODE_STRUCT) {
                 temp->printAST(typetableRoot->structvar[temp->var_name]);
             }
@@ -519,6 +527,7 @@ void TreeNode::printAST(namespore *nowtable) {
             return;
         }
         if (this->stype == STMT_DECL) {
+            timestamp++;
             auto temp = this->child->sibling->child;
             while (temp != nullptr) {
                 if (temp->ftype == DEFINE_FORMAT_INIT) {
@@ -566,12 +575,93 @@ void TreeNode::printAST(namespore *nowtable) {
             back += 4;
             cout << "call printf" << endl;
             cout << "addl $" << back << ", %esp" << endl;
-        }else if(this->sibling==STMT_FOR){
+        } else if (this->stype == STMT_FOR) {
+            this->child->printAST(nowtable);
+            cout << "FOR_CHECK" << to_string(label_num) << ":" << endl;
+            this->child->sibling->printExpr(nowtable);
+            cout << "popl %eax" << endl;
+            cout << "and $1, %eax" << endl;
+            cout << "cmp $1, %eax" << endl;
+            cout << "je " << "FOR_WORK" << to_string(label_num) << endl;
+            cout << "jmp " << "FOR_END" << to_string(label_num) << endl;
+            cout << "FOR_WORK" << to_string(label_num) << ":" << endl;
+            //todo for循环stmt遍历
+            auto tmp = this->child->sibling->sibling->sibling->child;
+            auto temp = nowtable->child;
+            while (tmp != nullptr) {
+                if (tmp->nodeType == NODE_STMT) {
+                    if (tmp->stype == STMT_IF || tmp->stype == STMT_IF_ELSE || tmp->stype == STMT_WHILE ||
+                        tmp->stype == STMT_FOR) {
+                        tmp->printAST(temp);
+                        temp = temp->sibling;
+                    } else tmp->printAST(nowtable);
+                }
+                tmp->printAST(nowtable);
+                tmp = tmp->sibling;
+            }
+            cout << "FOR_INC" << to_string(label_num) << ":" << endl;
+            this->child->sibling->sibling->printAST(nowtable);
+            cout << "jmp " << "FOR_CHECK" << to_string(label_num) << endl;
+            cout << "FOR_END" << to_string(label_num) << ":" << endl;
+            label_num++;
+        } else if (this->stype == STMT_WHILE) {
 
+        } else if (this->stype == STMT_IF) {
 
+        } else if (this->stype == STMT_IF_ELSE) {
 
+        } else if (this->stype == STMT_ASSIGN) {
+            this->child->printIdAdress(nowtable);
+            this->child->sibling->printExpr(nowtable);
+            cout << "popl %eax" << endl;
+            cout << "popl %ebx" << endl;
+            cout << "movl %eax, (%ebx)" << endl;
+        } else if (this->stype == STMT_ASSIGN_ADD) {
+            this->child->printIdAdress(nowtable);
+            this->child->sibling->printExpr(nowtable);
+            cout << "popl %eax" << endl;
+            cout << "popl %ebx" << endl;
+            cout << "addl %eax, (%ebx)" << endl;
+        } else if (this->stype == STMT_ASSIGN_MUL) {
+            this->child->printIdAdress(nowtable);
+            this->child->sibling->printExpr(nowtable);
+            cout << "popl %ebx" << endl;
+            cout << "popl %eax" << endl;
+            cout << "movl %eax, %ecx" << endl;
+            cout << "movl (%eax), %eax" << endl;
+            cout << "imull %ebx" << endl;
+            cout << "movl %eax, (%ecx)" << endl;
+        } else if (this->stype == STMT_ASSIGN_SUB) {
+            this->child->printIdAdress(nowtable);
+            this->child->sibling->printExpr(nowtable);
+            cout << "popl %eax" << endl;
+            cout << "popl %ebx" << endl;
+            cout << "subl %eax, (%ebx)" << endl;
+        } else if (this->stype == STMT_ASSIGN_DIV) {
+            this->child->printIdAdress(nowtable);
+            this->child->sibling->printExpr(nowtable);
+            cout << "movl $0, %edx" << endl;
+            cout << "popl %ebx" << endl;
+            cout << "popl %eax" << endl;
+            cout << "movl %eax, %ecx" << endl;
+            cout << "movl (%eax), %eax" << endl;
+            cout << "idivl %ebx" << endl;
+            cout << "movl %eax, (%ecx)" << endl;
+        } else if (this->stype == STMT_ASSIGN_MOD) {
+            this->child->printIdAdress(nowtable);
+            this->child->sibling->printExpr(nowtable);
+            cout << "movl $0, %edx" << endl;
+            cout << "popl %ebx" << endl;
+            cout << "popl %eax" << endl;
+            cout << "movl %eax, %ecx" << endl;
+            cout << "movl (%eax), %eax" << endl;
+            cout << "idivl %ebx" << endl;
+            cout << "movl %edx, (%ecx)" << endl;
+        } else if (this->stype == STMT_ASSIGN_ADD_SELF) {
+            this->child->printIdAdress(nowtable);
+            cout << "popl %eax" << endl;
+            cout << "addl $1, (%eax)" << endl;
         }
-
     } else if (this->nodeType == NODE_FUNC) {
         cout << ".text" << endl;
         cout << ".globl " << this->var_name << endl;
@@ -582,12 +672,22 @@ void TreeNode::printAST(namespore *nowtable) {
         cout << "addl $" << typetableRoot->var[this->var_name].varsize << ",%esp" << endl;
         in_function = this->var_name;
         //参数列表偏移值计算 todo
+        timestamp++;
+
 
 
         //函数体生成
         auto tmp = this->child->sibling->sibling->sibling->child;
+        auto temp = nowtable->child;
         while (tmp != nullptr) {
-            tmp->printAST(nowtable);
+            if (tmp->nodeType == NODE_STMT) {
+                if (tmp->stype == STMT_IF || tmp->stype == STMT_IF_ELSE || tmp->stype == STMT_WHILE ||
+                    tmp->stype == STMT_FOR) {
+                    tmp->printAST(temp);
+                    temp = temp->sibling;
+                } else tmp->printAST(nowtable);
+            } else
+                tmp->printAST(nowtable);
             tmp = tmp->sibling;
         }
         //todo return 修改
@@ -598,6 +698,11 @@ void TreeNode::printAST(namespore *nowtable) {
         cout << "ret" << endl;
         in_function = "";
     } else if (this->nodeType == NODE_STRUCT) {
+        auto temp = this->child->sibling->child;
+        while (temp != nullptr) {
+            if (temp->nodeType == NODE_STMT && temp->stype == STMT_DECL)
+                timestamp++;
+        }
 
     } else {
         cerror("not support");

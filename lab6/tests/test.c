@@ -3,13 +3,15 @@ int c;
 int asd;
 int tem[123];
 int main(){
+  c=a;
   int a;
   scanf("%d", &a);
   int ops[23][43];
   int b;
   scanf("%d",&b);
-  printf("%d %d %d %d %d %d\n",a>b, a<b,a==b,a!=b,a>=b,a<=b);
-  // scanf("%d %d",&c,&asd);
-  // printf("%d\n",c);
+  a=b+b;
+  scanf("%d",&ops[11][12]);
+  b=(a-b)*(ops[11][12]);
+  printf("%d %d %d %d\n",b, a, ops[11][12], c);
   return 0;
 }
