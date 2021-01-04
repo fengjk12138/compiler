@@ -621,6 +621,43 @@ void TreeNode::printAST(namespore *nowtable) {
         } else if (this->stype == STMT_WHILE) {
 
         } else if (this->stype == STMT_IF) {
+            int hisnum = label_num;
+            label_num++;
+            this->child->printExpr(nowtable);
+            cout << "popl %eax" << endl;
+            cout << "and $1, %eax" << endl;
+            cout << "cmp $1, %eax" << endl;
+            cout << "je " << "IF_WORK" << to_string(hisnum) << endl;
+            cout << "jmp " << "IF_EXIT" << to_string(hisnum) << endl;
+            cout << "IF_WORK" << to_string(hisnum) << ":" << endl;
+
+            auto tmp = this->child->sibling;
+            if (tmp->stype == STMT_BLOCK) {
+                tmp = tmp->child;
+                auto temp = nowtable->child;
+                while (tmp != nullptr) {
+                    if (tmp->nodeType == NODE_STMT) {
+                        if (tmp->stype == STMT_IF || tmp->stype == STMT_IF_ELSE || tmp->stype == STMT_WHILE ||
+                            tmp->stype == STMT_FOR) {
+                            tmp->printAST(temp);
+                            temp = temp->sibling;
+                        } else tmp->printAST(nowtable);
+                    } else
+                        tmp->printAST(nowtable);
+                    tmp = tmp->sibling;
+                }
+            } else {
+                auto temp = nowtable->child;
+                if (tmp->stype == STMT_IF || tmp->stype == STMT_IF_ELSE || tmp->stype == STMT_WHILE ||
+                    tmp->stype == STMT_FOR) {
+                    tmp->printAST(temp);
+                    temp = temp->sibling;
+                } else tmp->printAST(nowtable);
+
+            }
+
+
+            cout << "IF_EXIT" << to_string(hisnum) << ":" << endl;
 
         } else if (this->stype == STMT_IF_ELSE) {
 
@@ -719,7 +756,7 @@ void TreeNode::printAST(namespore *nowtable) {
         }
 
     } else {
-        cerror("not support");
+        cerror("not support asm in such");
     }
 }
 
