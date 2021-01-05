@@ -199,6 +199,7 @@ FUNCTION_CALL: IDENTIFIER left_br_small parameter_list_call_or_empty right_br_sm
 	$$->exptype = FUNC_CALL;
 	$$ -> addChild($1);
 	$$ -> addChild($3);
+	$$->var_name=$1->var_name;
 }
 
 //结构体定义

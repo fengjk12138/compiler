@@ -379,24 +379,24 @@ void TreeNode::genTable(namespore *nowtable) {
 
 //参数列表
         auto temp = this->child->sibling->sibling->child;
-
+        int tmppos = -8;
         while (temp != nullptr) {
             auto para_name = temp->sibling->var_name;
             if (nowtable->var.find(para_name) != nowtable->var.end()) {
                 cerror("Repeated definition");
             }
             if (temp->type == TYPE_INT) {
-                nowtable->var[para_name] =
-                        VarNode(INT);
+                nowtable->var[para_name] = VarNode(INT);
+                nowtable->var[para_name].pos = tmppos;
             } else if (temp->type == TYPE_CHAR) {
-                nowtable->var[para_name] =
-                        VarNode(CHARR);
+                nowtable->var[para_name] = VarNode(CHARR);
+                nowtable->var[para_name].pos = tmppos;
             } else {
                 cerror("function parameter these type not implement");
             }
+            tmppos -= 4;
             nowtable->var[para_name].timestamp = timestamp;
-            nowtable->param_list.
-                    push_back(nowtable->var[para_name]);
+            nowtable->param_list.push_back(nowtable->var[para_name]);
             temp = temp->sibling;
             temp = temp->sibling;
         }
@@ -858,6 +858,15 @@ void TreeNode::printAST(namespore *nowtable) {
         } else if (this->stype == STMT_CONTINUE) {
             auto tmp = loop_flag.top();
             cout << "jmp " << tmp.second << endl;
+        } else if (this->stype == STMT_RET) {
+            if (this->child->nodeType != NODE_EMPTY) {
+                this->child->printExpr(nowtable);
+            }
+            cout << "popl %eax" << endl;
+            cout << "jmp " << in_function << "_EXIT" << endl;
+        } else if (this->stype == STMT_FUNCTION_CALL) {
+            this->printExpr(nowtable);
+            cout << "popl %eax" << endl;
         }
     } else if (this->nodeType == NODE_FUNC) {
         cout << ".text" << endl;
@@ -870,8 +879,6 @@ void TreeNode::printAST(namespore *nowtable) {
         in_function = this->var_name;
         //参数列表偏移值计算 todo
         timestamp++;
-
-
 
         //函数体生成
         auto tmp = this->child->sibling->sibling->sibling->child;
@@ -892,12 +899,12 @@ void TreeNode::printAST(namespore *nowtable) {
         }
 
         //todo return 修改
-
-        cout << "addl $" << typetableRoot->var[this->var_name].varsize << ",%esp" << endl;
-        cout << "movl $0, %eax" << endl;
+        cout << in_function << "_EXIT:" << endl;
+        cout << "movl %ebp, %esp" << endl;
         cout << "popl %ebp" << endl;
         cout << "ret" << endl;
         in_function = "";
+
     } else if (this->nodeType == NODE_STRUCT) {
         auto temp = this->child->sibling->child;
         while (temp != nullptr) {
@@ -911,14 +918,29 @@ void TreeNode::printAST(namespore *nowtable) {
 }
 
 void TreeNode::printExpr(namespore *nowtable) {
-    if (this->exptype == IDENTIFIER_VAL) {
+    if ((this->nodeType == NODE_STMT && this->stype == STMT_FUNCTION_CALL)
+        || (this->nodeType == NODE_EXPR && this->exptype == FUNC_CALL)) {
+        auto tmp = this->child->sibling->child;
+        vector < TreeNode * > should_put;
+        while (tmp != nullptr) {
+            should_put.push_back(tmp);
+            tmp = tmp->sibling;
+        }
+        reverse(should_put.begin(), should_put.end());
+        for (auto x:should_put) {
+            x->printExpr(nowtable);
+        }
+        cout << "call " << this->var_name << endl;
+        cout<<"add $"<<should_put.size()*4<<", %esp"<<endl;
+        cout << "pushl %eax" << endl;
+    } else if (this->exptype == IDENTIFIER_VAL) {
         this->printIdAdress(nowtable);
         cout << "popl %eax" << endl;
         cout << "pushl (%eax)" << endl;
     } else if (this->exptype == INTEGER_VAL) {
         cout << "pushl $" << this->int_val << endl;
     } else if (this->exptype == CHAR_VAL) {
-        cout << "pushl $" << this->ch_val << endl;
+        cout << "pushl $" << (int)this->ch_val << endl;
     } else if (this->exptype == ADD) {
         this->child->printExpr(nowtable);
         this->child->sibling->printExpr(nowtable);
@@ -1051,7 +1073,9 @@ VarNode TreeNode::getIdValType(namespore *nowtable) {
             cerror("can not find this IDENTIFIER");
         }
         if (temptable->var[id_name].basetype == INT || temptable->var[id_name].basetype == CHARR) {
-            return VarNode(temptable->var[id_name].basetype);
+            auto rr= VarNode(temptable->var[id_name].basetype);
+            rr.returnType=INT;
+            return rr;
         } else if (temptable->var[id_name].basetype == CONST_INT) {
             auto tempret = VarNode(INT);
             tempret.returnType = CONST_INT;
@@ -1145,9 +1169,9 @@ VarNode TreeNode::getIdValType(namespore *nowtable) {
 }
 
 VarNode TreeNode::getExprType(namespore *nowtable) {
-    if (this->
-            nodeType == NODE_STMT) {
+    if (this->nodeType == NODE_STMT) {
         auto tmp1 = this->child->getIdValType(nowtable);
+//        cout<<this->child->var_name<<endl;
         if (tmp1.returnType == CONST_INT || tmp1.returnType == CONST_CHAR) {
             cerror("const var can not assgin");
         }
@@ -1235,7 +1259,6 @@ VarNode TreeNode::getExprType(namespore *nowtable) {
 }
 
 void TreeNode::printIdAdress(namespore *nowtable) {
-
     if (this->vartype == VAR_TYPE) {
         auto vattmp = findVar(nowtable, this->var_name);
 
@@ -1244,7 +1267,7 @@ void TreeNode::printIdAdress(namespore *nowtable) {
             cout << "pushl %eax" << endl;
         } else {
             cout << "movl %ebp, %eax" << endl;
-            cout << "addl $-" << vattmp.pos << ", %eax" << endl;
+            cout << "subl $" << vattmp.pos << ", %eax" << endl;
             cout << "pushl %eax" << endl;
         }
     } else if (this->vartype == ARRAY_TYPE) {
@@ -1276,7 +1299,8 @@ void TreeNode::printIdAdress(namespore *nowtable) {
             cout << "movl $4, %edx" << endl;
             cout << "imull %edx" << endl;
             cout << "subl %ebp, %eax" << endl;
-            cout << "movl $-" << vattmp.pos << ", %ebx" << endl;
+            cout << "movl $0, %ebx" << endl;
+            cout << "subl $" << vattmp.pos << ", %ebx" << endl;
             cout << "subl %eax, %ebx" << endl;
             cout << "pushl %ebx" << endl;
         }
@@ -1290,7 +1314,7 @@ void TreeNode::printIdAdress(namespore *nowtable) {
                 cout << "pushl %eax" << endl;
             } else {
                 cout << "movl %ebp, %eax" << endl;
-                cout << "addl $-" << vartemp.pos << ", %eax" << endl;
+                cout << "subl $" << vartemp.pos << ", %eax" << endl;
                 cout << "pushl %eax" << endl;
             }
         } else {
@@ -1322,7 +1346,8 @@ void TreeNode::printIdAdress(namespore *nowtable) {
                 cout << "movl $" << typetableRoot->var[vartemp.nametype].varsize << ", %edx" << endl;
                 cout << "imull %edx" << endl;
                 cout << "subl %ebp, %eax" << endl;
-                cout << "movl $-" << vartemp.pos << ", %ebx" << endl;
+                cout << "movl $0, %ebx" << endl;
+                cout << "subl $" << vartemp.pos << ", %ebx" << endl;
                 cout << "subl %eax, %ebx" << endl;
                 cout << "pushl %ebx" << endl;
             }
