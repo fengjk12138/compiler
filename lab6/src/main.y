@@ -22,7 +22,7 @@
 
 %token Return If While For Main BREAK CONTINUE
 
-%left LOP_EQ
+%left LOP_ASSIGN
 %left add_assgin sub_assgin mul_assgin div_assgin mod_assgin
 %left NOT
 %left OR

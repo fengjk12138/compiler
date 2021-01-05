@@ -1,15 +1,12 @@
-int fact(int n) {
-  if (n == 0) {
-    return 1;
-  }
-  int nn;
-  nn = n-1;
-  return (n * fact(nn));
-}
-
-int main() {
-  int n;
-  n = 4;
-  printf("%d\n",fact(n));
-  return 0;
+int a=10;
+int main(){
+    int a;
+    a=1;
+    for(int i=0;i<10;i=i+1){
+        int a;
+        a=i*10+i%3;
+        printf("Test %d %d\n",i,a);
+    }
+    printf("Test %d\n",a);
+    return 0;
 }

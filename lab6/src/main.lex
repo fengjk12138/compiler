@@ -13,9 +13,10 @@ LINECOMMENT \/\/[^\n]*
 EOL	(\r\n|\r|\n)
 WHILTESPACE [[:blank:]]
 
-INTEGER [0-9]+
+INTEGER [1-9][0-9]*|[0][X][0-9A-F]+|[0][x][0-9a-f]+|[0][0-9]+|[0]
 
-CHAR \'.?\'
+CHAR \'.?\'|\'\\t\'|\'\\n\'|\'\\r\'|\'\\\\\'|\'\\\'\'|\'\\\"\'|\'\\0\'
+
 STRING \".+\"
 BOOL_CONST "true"|"false"
 
@@ -89,7 +90,19 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 {INTEGER} {
     TreeNode* node = new TreeNode(lineno, NODE_CONST);
     node->vartype = CONST_INT_TYPE;
-    node->int_val = atoi(yytext);
+    string num(yytext);
+    node->int_val=0;
+    if(num.length()>2 && num[0]=='0' && (num[1]=='x' || num[1]=='X')){
+        for(int i=2;i<num.length();i++){
+            node->int_val*=16;
+            if(num[1]=='X')
+                node->int_val+=num[i]-((num[i]>='A')?('A'-10):('0'));
+            else node->int_val+=num[i]-((num[i]>='a')?('a'-10):('0'));
+        }
+    }else if(num.length()>=2 && num[0]=='0'){
+        for(int i=1;i<num.length();i++)
+            node->int_val*=8,node->int_val+=num[i]-'0';
+    }else node->int_val = atoi(yytext);
     yylval = node;
     return INTEGER;
 }
