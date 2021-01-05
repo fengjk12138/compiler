@@ -41,7 +41,7 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 
 "void" return Void;
 "break" return BREAK;
-"CONTINUE" return CONTINUE;
+"continue" return CONTINUE;
 
 
 "==" return eql;

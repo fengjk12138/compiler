@@ -4,6 +4,7 @@
 namespore *typetableRoot;
 using namespace std;
 int label_num = 0;
+stack<pair<string, string>>loop_flag;
 
 void TreeNode::addChild(TreeNode *child) {
     if (this->child == nullptr) {
@@ -542,7 +543,6 @@ void TreeNode::printAST(namespore *nowtable) {
                 temp = temp->sibling;
             }
         } else if (this->stype == STMT_SCANF) {
-
             int back = 0;
             vector < TreeNode * > should_push;
             auto temp = this->child->sibling->child;
@@ -579,6 +579,9 @@ void TreeNode::printAST(namespore *nowtable) {
         } else if (this->stype == STMT_FOR) {
             int hisnum = label_num;
             label_num++;
+
+            loop_flag.push(make_pair("FOR_END"+to_string(hisnum),"FOR_INC"+to_string(hisnum)));
+
             this->child->printAST(nowtable);
             cout << "FOR_CHECK" << to_string(hisnum) << ":" << endl;
             this->child->sibling->printExpr(nowtable);
@@ -598,27 +601,81 @@ void TreeNode::printAST(namespore *nowtable) {
                         if (tmp->stype == STMT_IF || tmp->stype == STMT_IF_ELSE || tmp->stype == STMT_WHILE ||
                             tmp->stype == STMT_FOR) {
                             tmp->printAST(temp);
+                            if (tmp->stype == STMT_IF_ELSE)
+                                temp = temp->sibling;
                             temp = temp->sibling;
-                        } else tmp->printAST(nowtable);
-                    } else
-                        tmp->printAST(nowtable);
+                        } else
+                            tmp->printAST(nowtable);
+                    } else tmp->printAST(nowtable);
                     tmp = tmp->sibling;
                 }
             } else {
                 auto temp = nowtable->child;
-                if (tmp->stype == STMT_IF || tmp->stype == STMT_IF_ELSE || tmp->stype == STMT_WHILE ||
-                    tmp->stype == STMT_FOR) {
-                    tmp->printAST(temp);
-                    temp = temp->sibling;
+                if (tmp->nodeType == NODE_STMT) {
+                    if (tmp->stype == STMT_IF || tmp->stype == STMT_IF_ELSE || tmp->stype == STMT_WHILE ||
+                        tmp->stype == STMT_FOR) {
+                        tmp->printAST(temp);
+                        if (tmp->stype == STMT_IF_ELSE)
+                            temp = temp->sibling;
+                        temp = temp->sibling;
+                    } else
+                        tmp->printAST(nowtable);
+                    //todo function call
                 } else tmp->printAST(nowtable);
-
             }
             cout << "FOR_INC" << to_string(hisnum) << ":" << endl;
             this->child->sibling->sibling->printAST(nowtable);
             cout << "jmp " << "FOR_CHECK" << to_string(hisnum) << endl;
             cout << "FOR_END" << to_string(hisnum) << ":" << endl;
+            loop_flag.pop();
 
         } else if (this->stype == STMT_WHILE) {
+            int hisnum = label_num;
+            label_num++;
+            loop_flag.push(make_pair("WHILE_END"+to_string(hisnum),"WHILE_CHECK"+to_string(hisnum)));
+            cout << "WHILE_CHECK" << to_string(hisnum) << ":" << endl;
+            this->child->printExpr(nowtable);
+            cout << "popl %eax" << endl;
+            cout << "and $1, %eax" << endl;
+            cout << "cmp $1, %eax" << endl;
+            cout << "je " << "WHILE_WORK" << to_string(hisnum) << endl;
+            cout << "jmp " << "WHILE_END" << to_string(hisnum) << endl;
+            cout << "WHILE_WORK" << to_string(hisnum) << ":" << endl;
+            //todo while循环stmt遍历
+            auto tmp = this->child->sibling;
+            if (tmp->stype == STMT_BLOCK) {
+                tmp = tmp->child;
+                auto temp = nowtable->child;
+                while (tmp != nullptr) {
+                    if (tmp->nodeType == NODE_STMT) {
+                        if (tmp->stype == STMT_IF || tmp->stype == STMT_IF_ELSE || tmp->stype == STMT_WHILE ||
+                            tmp->stype == STMT_FOR) {
+                            tmp->printAST(temp);
+                            if (tmp->stype == STMT_IF_ELSE)
+                                temp = temp->sibling;
+                            temp = temp->sibling;
+                        } else
+                            tmp->printAST(nowtable);
+                    } else tmp->printAST(nowtable);
+                    tmp = tmp->sibling;
+                }
+            } else {
+                auto temp = nowtable->child;
+                if (tmp->nodeType == NODE_STMT) {
+                    if (tmp->stype == STMT_IF || tmp->stype == STMT_IF_ELSE || tmp->stype == STMT_WHILE ||
+                        tmp->stype == STMT_FOR) {
+                        tmp->printAST(temp);
+                        if (tmp->stype == STMT_IF_ELSE)
+                            temp = temp->sibling;
+                        temp = temp->sibling;
+                    } else
+                        tmp->printAST(nowtable);
+                    //todo function call
+                } else tmp->printAST(nowtable);
+            }
+            cout << "jmp " << "WHILE_CHECK" << to_string(hisnum) << endl;
+            cout << "WHILE_END" << to_string(hisnum) << ":" << endl;
+            loop_flag.pop();
 
         } else if (this->stype == STMT_IF) {
             int hisnum = label_num;
@@ -640,27 +697,105 @@ void TreeNode::printAST(namespore *nowtable) {
                         if (tmp->stype == STMT_IF || tmp->stype == STMT_IF_ELSE || tmp->stype == STMT_WHILE ||
                             tmp->stype == STMT_FOR) {
                             tmp->printAST(temp);
+                            if (tmp->stype == STMT_IF_ELSE)
+                                temp = temp->sibling;
                             temp = temp->sibling;
-                        } else tmp->printAST(nowtable);
-                    } else
-                        tmp->printAST(nowtable);
+                        } else
+                            tmp->printAST(nowtable);
+                    } else tmp->printAST(nowtable);
+                    //todo function call
                     tmp = tmp->sibling;
                 }
             } else {
                 auto temp = nowtable->child;
-                if (tmp->stype == STMT_IF || tmp->stype == STMT_IF_ELSE || tmp->stype == STMT_WHILE ||
-                    tmp->stype == STMT_FOR) {
-                    tmp->printAST(temp);
-                    temp = temp->sibling;
+                if (tmp->nodeType == NODE_STMT) {
+                    if (tmp->stype == STMT_IF || tmp->stype == STMT_IF_ELSE || tmp->stype == STMT_WHILE ||
+                        tmp->stype == STMT_FOR) {
+                        tmp->printAST(temp);
+                        if (tmp->stype == STMT_IF_ELSE)
+                            temp = temp->sibling;
+                        temp = temp->sibling;
+                    } else tmp->printAST(nowtable);
                 } else tmp->printAST(nowtable);
-
             }
-
-
             cout << "IF_EXIT" << to_string(hisnum) << ":" << endl;
 
         } else if (this->stype == STMT_IF_ELSE) {
+//            cout<<"hhhhhhhh"<<endl;
+            int hisnum = label_num;
+            label_num++;
+            this->child->printExpr(nowtable);
+            cout << "popl %eax" << endl;
+            cout << "and $1, %eax" << endl;
+            cout << "cmp $1, %eax" << endl;
+            cout << "je " << "IF_THEN" << to_string(hisnum) << endl;
+            cout << "jmp " << "IF_ELSE" << to_string(hisnum) << endl;
+            cout << "IF_THEN" << to_string(hisnum) << ":" << endl;
 
+            auto tmp = this->child->sibling;
+            if (tmp->stype == STMT_BLOCK) {
+                tmp = tmp->child;
+                auto temp = nowtable->child;
+                while (tmp != nullptr) {
+                    if (tmp->nodeType == NODE_STMT) {
+                        if (tmp->stype == STMT_IF || tmp->stype == STMT_IF_ELSE || tmp->stype == STMT_WHILE ||
+                            tmp->stype == STMT_FOR) {
+                            tmp->printAST(temp);
+                            if (tmp->stype == STMT_IF_ELSE)
+                                temp = temp->sibling;
+                            temp = temp->sibling;
+                        } else
+                            tmp->printAST(nowtable);
+                    } else tmp->printAST(nowtable);
+                    //todo function call
+                    tmp = tmp->sibling;
+                }
+            } else {
+                auto temp = nowtable->child;
+                if (tmp->nodeType == NODE_STMT) {
+                    if (tmp->stype == STMT_IF || tmp->stype == STMT_IF_ELSE || tmp->stype == STMT_WHILE ||
+                        tmp->stype == STMT_FOR) {
+                        tmp->printAST(temp);
+                        if (tmp->stype == STMT_IF_ELSE)
+                            temp = temp->sibling;
+                        temp = temp->sibling;
+                    } else tmp->printAST(nowtable);
+                } else tmp->printAST(nowtable);
+            }
+            cout << "jmp IF_EXIT" << to_string(hisnum) << endl;
+            cout << "IF_ELSE" << to_string(hisnum) << ":" << endl;
+            tmp = this->child->sibling->sibling;
+            nowtable = nowtable->sibling;
+            if (tmp->stype == STMT_BLOCK) {
+                tmp = tmp->child;
+                auto temp = nowtable->child;
+                while (tmp != nullptr) {
+                    if (tmp->nodeType == NODE_STMT) {
+                        if (tmp->stype == STMT_IF || tmp->stype == STMT_IF_ELSE || tmp->stype == STMT_WHILE ||
+                            tmp->stype == STMT_FOR) {
+                            tmp->printAST(temp);
+                            if (tmp->stype == STMT_IF_ELSE)
+                                temp = temp->sibling;
+                            temp = temp->sibling;
+                        } else
+                            tmp->printAST(nowtable);
+                    } else tmp->printAST(nowtable);
+                    //todo function call
+                    tmp = tmp->sibling;
+                }
+            } else {
+                auto temp = nowtable->child;
+                if (tmp->nodeType == NODE_STMT) {
+                    if (tmp->stype == STMT_IF || tmp->stype == STMT_IF_ELSE || tmp->stype == STMT_WHILE ||
+                        tmp->stype == STMT_FOR) {
+                        tmp->printAST(temp);
+                        if (tmp->stype == STMT_IF_ELSE)
+                            temp = temp->sibling;
+                        temp = temp->sibling;
+                    } else tmp->printAST(nowtable);
+                } else tmp->printAST(nowtable);
+            }
+            cout << "IF_EXIT" << to_string(hisnum) << ":" << endl;
         } else if (this->stype == STMT_ASSIGN) {
             this->child->printIdAdress(nowtable);
             this->child->sibling->printExpr(nowtable);
@@ -712,6 +847,12 @@ void TreeNode::printAST(namespore *nowtable) {
             this->child->printIdAdress(nowtable);
             cout << "popl %eax" << endl;
             cout << "addl $1, (%eax)" << endl;
+        }else if(this->stype==STMT_BREAK){
+            auto tmp=loop_flag.top();
+            cout<<"jmp "<<tmp.first<<endl;
+        }else if(this->stype==STMT_CONTINUE){
+            auto tmp=loop_flag.top();
+            cout<<"jmp "<<tmp.second<<endl;
         }
     } else if (this->nodeType == NODE_FUNC) {
         cout << ".text" << endl;
@@ -735,12 +876,16 @@ void TreeNode::printAST(namespore *nowtable) {
                 if (tmp->stype == STMT_IF || tmp->stype == STMT_IF_ELSE || tmp->stype == STMT_WHILE ||
                     tmp->stype == STMT_FOR) {
                     tmp->printAST(temp);
+                    if (tmp->stype == STMT_IF_ELSE)
+                        temp = temp->sibling;
                     temp = temp->sibling;
-                } else tmp->printAST(nowtable);
-            } else
-                tmp->printAST(nowtable);
+                } else
+                    tmp->printAST(nowtable);
+            } else tmp->printAST(nowtable);
+            //todo function call
             tmp = tmp->sibling;
         }
+
         //todo return 修改
 
         cout << "addl $" << typetableRoot->var[this->var_name].varsize << ",%esp" << endl;
