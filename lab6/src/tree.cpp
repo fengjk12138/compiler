@@ -4,7 +4,7 @@
 namespore *typetableRoot;
 using namespace std;
 int label_num = 0;
-stack<pair<string, string>>loop_flag;
+stack <pair<string, string>> loop_flag;
 
 void TreeNode::addChild(TreeNode *child) {
     if (this->child == nullptr) {
@@ -35,6 +35,7 @@ string in_function = "";
 int in_loop = 0;
 int nowpos = 4;
 int timestamp = 1;
+int instruct = 0;
 
 void TreeNode::genTable(namespore *nowtable) {
     if (this->nodeType == NODE_PROG) {
@@ -172,9 +173,13 @@ void TreeNode::genTable(namespore *nowtable) {
                 } else {
                     cerror("not right type");
                 }
-                nowtable->var[now->child->child->var_name].timestamp = timestamp;
+                if (instruct)
+                    nowtable->var[now->child->child->var_name].timestamp = -1;
+                else
+                    nowtable->var[now->child->child->var_name].timestamp = timestamp;
             }
-            timestamp++;
+            if (!instruct)
+                timestamp++;
         } else if (this->stype == STMT_BREAK) {
             if (in_loop == 0) {
                 cerror("break should be used in loop");
@@ -409,6 +414,7 @@ void TreeNode::genTable(namespore *nowtable) {
         nowtable->var[function_name].varsize = nowpos - 4;
         in_function = "";
     } else if (this->nodeType == NODE_STRUCT) {
+        instruct = 1;
         auto struct_name = this->var_name;
         if (nowtable->var.find(struct_name) != nowtable->var.end()) {
             cerror("Repeated definition");
@@ -420,8 +426,7 @@ void TreeNode::genTable(namespore *nowtable) {
         auto temp = this->child->sibling->child;
 
         while (temp != nullptr) {
-            temp->
-                    genTable(nowtable);
+            temp->genTable(nowtable);
             temp = temp->sibling;
         }
         for (auto &x:nowtable->var) {
@@ -429,7 +434,7 @@ void TreeNode::genTable(namespore *nowtable) {
             nowtable->fa->var[struct_name].varsize += x.second.varsize;
         }
         nowtable = nowtable->fa;
-
+        instruct = 0;
     } else {
         cerror("your code has something can not parse");
     }
@@ -517,7 +522,7 @@ void TreeNode::printAST(namespore *nowtable) {
             } else if (temp->nodeType == NODE_STMT) {
                 timestamp++;
             } else if (temp->nodeType == NODE_STRUCT) {
-                temp->printAST(typetableRoot->structvar[temp->var_name]);
+//                temp->printAST(typetableRoot->structvar[temp->var_name]);
             }
             temp = temp->sibling;
         }
@@ -580,7 +585,7 @@ void TreeNode::printAST(namespore *nowtable) {
             int hisnum = label_num;
             label_num++;
 
-            loop_flag.push(make_pair("FOR_END"+to_string(hisnum),"FOR_INC"+to_string(hisnum)));
+            loop_flag.push(make_pair("FOR_END" + to_string(hisnum), "FOR_INC" + to_string(hisnum)));
 
             this->child->printAST(nowtable);
             cout << "FOR_CHECK" << to_string(hisnum) << ":" << endl;
@@ -632,7 +637,7 @@ void TreeNode::printAST(namespore *nowtable) {
         } else if (this->stype == STMT_WHILE) {
             int hisnum = label_num;
             label_num++;
-            loop_flag.push(make_pair("WHILE_END"+to_string(hisnum),"WHILE_CHECK"+to_string(hisnum)));
+            loop_flag.push(make_pair("WHILE_END" + to_string(hisnum), "WHILE_CHECK" + to_string(hisnum)));
             cout << "WHILE_CHECK" << to_string(hisnum) << ":" << endl;
             this->child->printExpr(nowtable);
             cout << "popl %eax" << endl;
@@ -847,12 +852,12 @@ void TreeNode::printAST(namespore *nowtable) {
             this->child->printIdAdress(nowtable);
             cout << "popl %eax" << endl;
             cout << "addl $1, (%eax)" << endl;
-        }else if(this->stype==STMT_BREAK){
-            auto tmp=loop_flag.top();
-            cout<<"jmp "<<tmp.first<<endl;
-        }else if(this->stype==STMT_CONTINUE){
-            auto tmp=loop_flag.top();
-            cout<<"jmp "<<tmp.second<<endl;
+        } else if (this->stype == STMT_BREAK) {
+            auto tmp = loop_flag.top();
+            cout << "jmp " << tmp.first << endl;
+        } else if (this->stype == STMT_CONTINUE) {
+            auto tmp = loop_flag.top();
+            cout << "jmp " << tmp.second << endl;
         }
     } else if (this->nodeType == NODE_FUNC) {
         cout << ".text" << endl;
@@ -1230,8 +1235,10 @@ VarNode TreeNode::getExprType(namespore *nowtable) {
 }
 
 void TreeNode::printIdAdress(namespore *nowtable) {
+
     if (this->vartype == VAR_TYPE) {
         auto vattmp = findVar(nowtable, this->var_name);
+
         if (vattmp.is_global) {
             cout << "movl $" << this->var_name << ", %eax" << endl;
             cout << "pushl %eax" << endl;
@@ -1275,8 +1282,91 @@ void TreeNode::printIdAdress(namespore *nowtable) {
         }
     } else if (this->vartype == STRUCT_TYPE) {
 
+        auto vartemp = findVar(nowtable, this->var_name);
+        int thisis_g = vartemp.is_global;
+        if (this->child->vartype == VAR_TYPE) {
+            if (vartemp.is_global) {
+                cout << "movl $" << this->var_name << ", %eax" << endl;
+                cout << "pushl %eax" << endl;
+            } else {
+                cout << "movl %ebp, %eax" << endl;
+                cout << "addl $-" << vartemp.pos << ", %eax" << endl;
+                cout << "pushl %eax" << endl;
+            }
+        } else {
+            cout << "pushl $0" << endl;
+            auto temp = this->child->child->sibling->child;
+            for (int i = 0; i < vartemp.dim_num.size() - 1; i++) {
+                temp->printExpr(nowtable);
+                cout << "popl %eax" << endl;
+                int tmp = vartemp.dim_num[i];
+                cout << "movl $" << tmp << ", %edx" << endl;
+                cout << "imull %edx" << endl;
+                cout << "popl %ebx" << endl;
+                cout << "addl %ebx, %eax" << endl;
+                cout << "pushl %eax" << endl;
+                temp = temp->sibling;
+            }
+            temp->printExpr(nowtable);
+            cout << "popl %ebx" << endl;
+            cout << "popl %eax" << endl;
+            cout << "addl %ebx, %eax" << endl;
 
+            if (vartemp.is_global) {
+                cout << "movl $" << this->var_name << ", %ebx" << endl;
+                cout << "movl $" << typetableRoot->var[vartemp.nametype].varsize << ", %edx" << endl;
+                cout << "imull %edx" << endl;
+                cout << "addl %ebx, %eax" << endl;
+                cout << "pushl %eax" << endl;
+            } else {
+                cout << "movl $" << typetableRoot->var[vartemp.nametype].varsize << ", %edx" << endl;
+                cout << "imull %edx" << endl;
+                cout << "subl %ebp, %eax" << endl;
+                cout << "movl $-" << vartemp.pos << ", %ebx" << endl;
+                cout << "subl %eax, %ebx" << endl;
+                cout << "pushl %ebx" << endl;
+            }
+        }
+
+        auto structtable = typetableRoot->structvar[vartemp.nametype];
+        vartemp = findVar(structtable, this->child->sibling->var_name);
+        if (this->child->sibling->vartype == VAR_TYPE) {
+            cout << "movl $" << vartemp.offset_struct << ", %eax" << endl;
+            cout << "pushl %eax" << endl;
+        } else {
+            cout << "pushl $0" << endl;
+            auto temp = this->child->sibling->child->sibling->child;
+            for (int i = 0; i < vartemp.dim_num.size() - 1; i++) {
+                temp->printExpr(nowtable);
+                cout << "popl %eax" << endl;
+                int tmp = vartemp.dim_num[i];
+                cout << "movl $" << tmp << ", %edx" << endl;
+                cout << "imull %edx" << endl;
+                cout << "popl %ebx" << endl;
+                cout << "addl %ebx, %eax" << endl;
+                cout << "pushl %eax" << endl;
+                temp = temp->sibling;
+            }
+            temp->printExpr(nowtable);
+            cout << "popl %ebx" << endl;
+            cout << "popl %eax" << endl;
+            cout << "addl %ebx, %eax" << endl;
+            cout << "movl $4, %edx" << endl;
+            cout << "imull %edx" << endl;
+            cout << "pushl %eax" << endl;
+        }
+
+        cout << "popl %ebx" << endl;
+        cout << "popl %eax" << endl;
+        if (thisis_g) {
+            cout << "addl %ebx, %eax" << endl;
+        } else {
+            cout << "subl %ebx, %eax" << endl;
+        }
+        cout << "pushl %eax" << endl;
     }
+
+
 }
 
 VarNode::VarNode(Basetype a = INT) {
